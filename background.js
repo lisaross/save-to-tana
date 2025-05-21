@@ -84,8 +84,14 @@ function formatTanaPayload(data, nodeId) {
     ]
   });
   
-  // Add content as a child node if it exists
-  if (data.content) {
+  // Handle structured content if available
+  if (data.structuredContent && data.structuredContent.length > 0) {
+    // Process structured content into hierarchical nodes
+    const contentNodes = formatStructuredContent(data.structuredContent);
+    children.push(...contentNodes);
+  }
+  // Otherwise, add flat content if it exists
+  else if (data.content) {
     // Sanitize content - ensure it doesn't have formatting that would break Tana
     const sanitizedContent = data.content
       .replace(/\r?\n|\r/g, ' ')  // Replace newlines with spaces
@@ -111,4 +117,35 @@ function formatTanaPayload(data, nodeId) {
       }
     ]
   };
+}
+
+// Format structured content into Tana nodes
+function formatStructuredContent(structuredContent) {
+  const nodes = [];
+  
+  // Process each section
+  structuredContent.forEach(section => {
+    if (section.type === 'section') {
+      const sectionChildren = [];
+      
+      // Add paragraphs as children
+      if (section.content && section.content.length > 0) {
+        section.content.forEach(paragraph => {
+          if (paragraph && paragraph.trim()) {
+            sectionChildren.push({
+              name: paragraph
+            });
+          }
+        });
+      }
+      
+      // Add section with its children
+      nodes.push({
+        name: section.title || 'Untitled Section',
+        children: sectionChildren
+      });
+    }
+  });
+  
+  return nodes;
 }

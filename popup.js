@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const openOptionsLink = document.getElementById('open-options');
   const includeContentCheckbox = document.getElementById('include-content');
   const includeTitleCheckbox = document.getElementById('include-title');
+  const preserveStructureCheckbox = document.getElementById('preserve-structure');
   
   // Check if API key and node ID are configured
   chrome.storage.sync.get(['apiKey', 'nodeId'], function(result) {
@@ -28,7 +29,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const options = {
       includeContent: includeContentCheckbox.checked,
-      includeTitle: includeTitleCheckbox.checked
+      includeTitle: includeTitleCheckbox.checked,
+      preserveStructure: preserveStructureCheckbox.checked
     };
     
     // Get the current tab

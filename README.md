@@ -1,18 +1,20 @@
 # Save to Tana Chrome Extension
 
-A Chrome extension that allows you to save web page content and URLs to your Tana workspace.
+A Chrome extension that allows you to save web page content and URLs to your Tana workspace, preserving the page structure with headers as parent nodes and paragraphs as nested content.
 
 ## Features
 
 - Save the current web page's URL and content to Tana
+- Preserve page structure with headers as parent nodes and paragraphs as nested content
 - Configure which content to save (title, page content)
+- Toggle structure preservation on/off
 - Simple and intuitive user interface
 - Respects Tana API limits (5000 character payload limit)
 - Provides clear feedback on success or failure
 
 ## Installation Instructions
 
-1. Download and unzip the `save-to-tana.zip` file
+1. Download and unzip the `save-to-tana-structured.zip` file
 2. Open Chrome and navigate to `chrome://extensions/`
 3. Enable "Developer mode" by toggling the switch in the top right corner
 4. Click "Load unpacked" and select the unzipped `save-to-tana` folder
@@ -45,9 +47,21 @@ Before using the extension, you need to configure your Tana API Token and Target
 
 1. Navigate to any web page you want to save to Tana
 2. Click the Save to Tana extension icon in your Chrome toolbar
-3. Select which content you want to include (page title, content)
+3. Select which content you want to include:
+   - Page title
+   - Page content
+   - Preserve page structure (headers as parent nodes, paragraphs as nested content)
 4. Click "Save to Tana"
 5. The extension will save the content to your specified Tana node
+
+## How Structure Preservation Works
+
+When "Preserve page structure" is enabled:
+
+1. The extension identifies headers (h1, h2, h3, etc.) on the page
+2. Each header becomes a parent node in Tana
+3. Paragraphs and other content following a header become child nodes under that header
+4. This creates a hierarchical structure in Tana that mirrors the page's organization
 
 ## API Limitations
 
@@ -58,7 +72,7 @@ The Tana Input API has the following limitations:
 - One call per second per token
 - Will not sync on workspaces with more than 750k nodes
 
-The extension automatically truncates content to stay within these limits.
+The extension automatically handles content to stay within these limits.
 
 ## Troubleshooting
 
@@ -68,6 +82,7 @@ If you encounter issues:
 2. Check that your Tana workspace has fewer than 750k nodes
 3. Verify your internet connection
 4. Try refreshing the page before saving
+5. For complex pages, try disabling "Preserve page structure" if you encounter errors
 
 ## Privacy
 
