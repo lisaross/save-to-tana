@@ -1,15 +1,15 @@
 {
   "manifest_version": 3,
   "name": "Save to Tana",
-  "version": "1.0.0",
-  "description": "Save web page content and URLs to your Tana workspace",
+  "version": "1.0",
+  "description": "Save web page content to Tana with structured fields and supertags",
   "permissions": [
     "activeTab",
     "storage",
-    "scripting"
+    "contextMenus"
   ],
   "host_permissions": [
-    "https://europe-west1-tagr-prod.cloudfunctions.net/*"
+    "https://app.tana.inc/*"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -19,15 +19,7 @@
       "128": "images/icon128.png"
     }
   },
-  "icons": {
-    "16": "images/icon16.png",
-    "48": "images/icon48.png",
-    "128": "images/icon128.png"
-  },
-  "options_ui": {
-    "page": "options.html",
-    "open_in_tab": true
-  },
+  "options_page": "options.html",
   "background": {
     "service_worker": "background.js"
   },
@@ -35,6 +27,15 @@
     {
       "matches": ["<all_urls>"],
       "js": ["content.js"]
+    },
+    {
+      "matches": ["https://app.tana.inc/*"],
+      "js": ["content-script-extractor.js"]
     }
-  ]
+  ],
+  "icons": {
+    "16": "images/icon16.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
+  }
 }

@@ -4,14 +4,13 @@ document.addEventListener('DOMContentLoaded', function() {
   const openOptionsLink = document.getElementById('open-options');
   const includeContentCheckbox = document.getElementById('include-content');
   const includeTitleCheckbox = document.getElementById('include-title');
-  const preserveStructureCheckbox = document.getElementById('preserve-structure');
+  const notConfiguredDiv = document.getElementById('not-configured');
   
-  // Check if API key and node ID are configured
-  chrome.storage.sync.get(['apiKey', 'nodeId'], function(result) {
-    if (!result.apiKey || !result.nodeId) {
+  // Check if extension is configured
+  chrome.storage.sync.get(['apiKey', 'supertagId', 'fieldIds'], function(result) {
+    if (!result.apiKey || !result.supertagId || !result.fieldIds) {
       saveButton.disabled = true;
-      statusDiv.textContent = 'Please configure your API key and Node ID first';
-      statusDiv.className = 'status error';
+      notConfiguredDiv.style.display = 'block';
     }
   });
   
@@ -20,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
     chrome.runtime.openOptionsPage();
   });
   
-  // Save to Tana button click handler
+  // Save to Tana button
   saveButton.addEventListener('click', function() {
     saveButton.disabled = true;
     saveButton.textContent = 'Saving...';
@@ -29,47 +28,58 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const options = {
       includeContent: includeContentCheckbox.checked,
-      includeTitle: includeTitleCheckbox.checked,
-      preserveStructure: preserveStructureCheckbox.checked
+      includeTitle: includeTitleCheckbox.checked
     };
     
     // Get the current tab
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
       const currentTab = tabs[0];
       
-      // Send message to content script to extract page content
-      chrome.tabs.sendMessage(currentTab.id, {action: 'extractContent', options: options}, function(response) {
+      // Extract content from the page
+      chrome.tabs.sendMessage(currentTab.id, {
+        action: 'extractContent',
+        options: options
+      }, function(response) {
         if (chrome.runtime.lastError) {
-          showError('Error extracting content: ' + chrome.runtime.lastError.message);
+          showError('Error communicating with the page: ' + chrome.runtime.lastError.message);
+          saveButton.disabled = false;
+          saveButton.textContent = 'Save to Tana';
           return;
         }
         
         if (!response) {
-          showError('No response from content script');
+          showError('No response from the page. Please refresh and try again.');
+          saveButton.disabled = false;
+          saveButton.textContent = 'Save to Tana';
           return;
         }
         
-        // Check for error in content script response
         if (response.error) {
-          showError('Error extracting content: ' + response.message);
+          showError(response.message || 'Error extracting content from the page');
+          saveButton.disabled = false;
+          saveButton.textContent = 'Save to Tana';
           return;
         }
         
-        // Send data to background script to save to Tana
+        // Send data to background script
         chrome.runtime.sendMessage({
           action: 'saveToTana',
           data: response
         }, function(result) {
-          if (chrome.runtime.lastError) {
-            showError('Error saving to Tana: ' + chrome.runtime.lastError.message);
+          saveButton.disabled = false;
+          saveButton.textContent = 'Save to Tana';
+          
+          if (!result) {
+            showError('No response from the extension. Please try again.');
             return;
           }
           
-          if (result.success) {
-            showSuccess('Saved to Tana successfully!');
-          } else {
-            showError('Error: ' + result.error);
+          if (!result.success) {
+            showError(result.error || 'Unknown error occurred');
+            return;
           }
+          
+          showSuccess('Saved to Tana successfully!');
         });
       });
     });
@@ -78,14 +88,16 @@ document.addEventListener('DOMContentLoaded', function() {
   function showSuccess(message) {
     statusDiv.textContent = message;
     statusDiv.className = 'status success';
-    saveButton.disabled = false;
-    saveButton.textContent = 'Save to Tana';
+    
+    // Clear status after 3 seconds
+    setTimeout(function() {
+      statusDiv.textContent = '';
+      statusDiv.className = 'status';
+    }, 3000);
   }
   
   function showError(message) {
     statusDiv.textContent = message;
     statusDiv.className = 'status error';
-    saveButton.disabled = false;
-    saveButton.textContent = 'Save to Tana';
   }
 });

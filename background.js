@@ -1,4 +1,35 @@
 // Background script - handles API communication with Tana
+chrome.runtime.onInstalled.addListener(function() {
+  // Create context menu item for Tana pages
+  chrome.contextMenus.create({
+    id: "extractTanaConfig",
+    title: "Extract Save to Tana Configuration",
+    contexts: ["page"],
+    documentUrlPatterns: ["https://app.tana.inc/*"]
+  });
+});
+
+// Handle context menu clicks
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId === "extractTanaConfig") {
+    chrome.tabs.sendMessage(tab.id, { action: 'extractTanaConfiguration' }, function(response) {
+      if (chrome.runtime.lastError) {
+        console.error('Error:', chrome.runtime.lastError);
+        return;
+      }
+      
+      if (!response || !response.success) {
+        console.error('Failed to extract configuration:', response ? response.error : 'No response');
+        return;
+      }
+      
+      // Configuration extracted successfully
+      console.log('Configuration extracted:', response.config);
+    });
+  }
+});
+
+// Handle messages from popup and content scripts
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   if (request.action === 'saveToTana') {
     saveToTana(request.data)
@@ -20,21 +51,23 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 // Function to save data to Tana
 async function saveToTana(data) {
   try {
-    // Get API key and node ID from storage
+    // Get API key, target node ID, supertag ID, and field IDs from storage
     const result = await new Promise(resolve => {
-      chrome.storage.sync.get(['apiKey', 'nodeId'], resolve);
+      chrome.storage.sync.get(['apiKey', 'supertagId', 'fieldIds', 'targetNodeId'], resolve);
     });
     
     if (!result.apiKey) {
-      throw new Error('API Token not configured');
+      throw new Error('API Token not configured. Please go to extension options and set up your configuration.');
     }
     
-    if (!result.nodeId) {
-      throw new Error('Node ID not configured');
+    if (!result.supertagId || !result.fieldIds) {
+      throw new Error('Extension not fully configured. Please go to options and paste configuration from Tana.');
     }
+    
+    const targetNodeId = result.targetNodeId || 'INBOX';
     
     // Format data for Tana API
-    const tanaPayload = formatTanaPayload(data, result.nodeId);
+    const tanaPayload = formatTanaPayload(data, targetNodeId, result.supertagId, result.fieldIds);
     
     // Send data to Tana API
     const response = await fetch('https://europe-west1-tagr-prod.cloudfunctions.net/addToNodeV2', {
@@ -62,43 +95,69 @@ async function saveToTana(data) {
   }
 }
 
-// Format data for Tana API
-function formatTanaPayload(data, nodeId) {
+// Format data for Tana API with structured fields
+function formatTanaPayload(data, targetNodeId, supertagId, fieldIds) {
   // Create node name from title or URL, sanitizing to remove newlines
   let nodeName = data.title || data.url;
   
   // Sanitize node name - remove newlines as they're not allowed by Tana API
   nodeName = nodeName.replace(/\r?\n|\r/g, ' ').trim();
   
-  // Create children nodes for URL and content
-  const children = [];
-  
-  // Add URL as a child node
-  children.push({
-    name: "URL",
-    children: [
+  // Create the main node with supertag
+  const mainNode = {
+    name: nodeName,
+    supertags: [
       {
-        dataType: "url",
-        name: data.url
+        id: supertagId
       }
-    ]
-  });
+    ],
+    children: []
+  };
   
-  // Handle structured content if available
-  if (data.structuredContent && data.structuredContent.length > 0) {
-    // Process structured content into hierarchical nodes
-    const contentNodes = formatStructuredContent(data.structuredContent);
-    children.push(...contentNodes);
+  // Add URL field if available
+  if (data.url && fieldIds.URL) {
+    mainNode.children.push({
+      fieldId: fieldIds.URL,
+      children: [
+        {
+          dataType: "url",
+          name: data.url
+        }
+      ]
+    });
   }
-  // Otherwise, add flat content if it exists
-  else if (data.content) {
+  
+  // Add Author field if available
+  if (data.author && fieldIds.Author) {
+    mainNode.children.push({
+      fieldId: fieldIds.Author,
+      children: [
+        {
+          name: sanitizeText(data.author)
+        }
+      ]
+    });
+  }
+  
+  // Add Description field if available
+  if (data.description && fieldIds.Description) {
+    mainNode.children.push({
+      fieldId: fieldIds.Description,
+      children: [
+        {
+          name: sanitizeText(data.description)
+        }
+      ]
+    });
+  }
+  
+  // Add Content field if available
+  if (data.content && fieldIds.Content) {
     // Sanitize content - ensure it doesn't have formatting that would break Tana
-    const sanitizedContent = data.content
-      .replace(/\r?\n|\r/g, ' ')  // Replace newlines with spaces
-      .trim();
-      
-    children.push({
-      name: "Content",
+    const sanitizedContent = sanitizeText(data.content);
+    
+    mainNode.children.push({
+      fieldId: fieldIds.Content,
       children: [
         {
           name: sanitizedContent
@@ -109,43 +168,17 @@ function formatTanaPayload(data, nodeId) {
   
   // Create the payload
   return {
-    targetNodeId: nodeId,
-    nodes: [
-      {
-        name: nodeName,
-        children: children
-      }
-    ]
+    targetNodeId: targetNodeId,
+    nodes: [mainNode]
   };
 }
 
-// Format structured content into Tana nodes
-function formatStructuredContent(structuredContent) {
-  const nodes = [];
+// Sanitize text for Tana API
+function sanitizeText(text) {
+  if (!text) return '';
   
-  // Process each section
-  structuredContent.forEach(section => {
-    if (section.type === 'section') {
-      const sectionChildren = [];
-      
-      // Add paragraphs as children
-      if (section.content && section.content.length > 0) {
-        section.content.forEach(paragraph => {
-          if (paragraph && paragraph.trim()) {
-            sectionChildren.push({
-              name: paragraph
-            });
-          }
-        });
-      }
-      
-      // Add section with its children
-      nodes.push({
-        name: section.title || 'Untitled Section',
-        children: sectionChildren
-      });
-    }
-  });
-  
-  return nodes;
+  return text
+    .replace(/\r?\n|\r/g, ' ')  // Replace newlines with spaces
+    .replace(/\s+/g, ' ')       // Replace multiple spaces with a single space
+    .trim();
 }

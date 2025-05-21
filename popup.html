@@ -7,18 +7,35 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
       width: 300px;
-      padding: 15px;
+      margin: 0;
+      padding: 16px;
+    }
+    h2 {
+      color: #4f46e5;
+      margin-top: 0;
+      margin-bottom: 16px;
+      font-size: 18px;
     }
     .container {
       display: flex;
       flex-direction: column;
-      gap: 15px;
+      gap: 16px;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     button {
       background-color: #6366f1;
       color: white;
       border: none;
-      padding: 10px 15px;
+      padding: 10px;
       border-radius: 4px;
       cursor: pointer;
       font-weight: 500;
@@ -32,9 +49,9 @@
       cursor: not-allowed;
     }
     .status {
-      margin-top: 10px;
       padding: 10px;
       border-radius: 4px;
+      font-size: 14px;
       display: none;
     }
     .success {
@@ -48,9 +65,9 @@
       display: block;
     }
     .settings-link {
-      margin-top: 10px;
       font-size: 12px;
       text-align: center;
+      margin-top: 8px;
     }
     .settings-link a {
       color: #6366f1;
@@ -59,23 +76,23 @@
     .settings-link a:hover {
       text-decoration: underline;
     }
-    .options {
-      margin-top: 15px;
-    }
-    .checkbox-container {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-    label {
+    .not-configured {
+      background-color: #fef3c7;
+      color: #92400e;
+      padding: 10px;
+      border-radius: 4px;
       font-size: 14px;
+      margin-bottom: 8px;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h2>Save to Tana</h2>
+    
+    <div id="not-configured" class="not-configured" style="display: none;">
+      Extension not fully configured. Please go to options and set up your configuration.
+    </div>
     
     <div class="options">
       <div class="checkbox-container">
@@ -86,10 +103,6 @@
         <input type="checkbox" id="include-title" checked>
         <label for="include-title">Include page title</label>
       </div>
-      <div class="checkbox-container">
-        <input type="checkbox" id="preserve-structure" checked>
-        <label for="preserve-structure">Preserve page structure</label>
-      </div>
     </div>
     
     <button id="save-button">Save to Tana</button>
@@ -97,7 +110,7 @@
     <div id="status" class="status"></div>
     
     <div class="settings-link">
-      <a href="#" id="open-options">Configure API Key and Node ID</a>
+      <a href="#" id="open-options">Open Options</a>
     </div>
   </div>
   

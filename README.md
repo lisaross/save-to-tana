@@ -1,89 +1,67 @@
 # Save to Tana Chrome Extension
 
-A Chrome extension that allows you to save web page content and URLs to your Tana workspace, preserving the page structure with headers as parent nodes and paragraphs as nested content.
+A Chrome extension that saves web page content to Tana with structured fields and supertags using the Tana Input API.
 
 ## Features
 
-- Save the current web page's URL and content to Tana
-- Preserve page structure with headers as parent nodes and paragraphs as nested content
-- Configure which content to save (title, page content)
-- Toggle structure preservation on/off
-- Simple and intuitive user interface
-- Respects Tana API limits (5000 character payload limit)
-- Provides clear feedback on success or failure
+- Save web page content to Tana with proper structure
+- Automatically extract metadata (title, URL, author, description)
+- Apply supertags and structured fields to saved content
+- Extract configuration directly from your Tana nodes
+- Right-click context menu for easy configuration
 
 ## Installation Instructions
 
-1. Download and unzip the `save-to-tana-structured.zip` file
+1. Download and unzip the `save-to-tana-api-updated.zip` file
 2. Open Chrome and navigate to `chrome://extensions/`
 3. Enable "Developer mode" by toggling the switch in the top right corner
 4. Click "Load unpacked" and select the unzipped `save-to-tana` folder
 5. The extension should now appear in your Chrome toolbar
 
-## Configuration
+## Setup Instructions
 
-Before using the extension, you need to configure your Tana API Token and Target Node ID:
+1. **Extract Configuration from Tana**:
+   - Navigate to your Tana node with the #save-to-tana supertag
+   - Either:
+     - Click the extraction button that appears next to the node (info icon), or
+     - Right-click on the page and select "Extract Save to Tana Configuration"
+   - The configuration will be copied to your clipboard
 
-1. Click on the extension icon in your Chrome toolbar
-2. Click "Configure API Key and Node ID" at the bottom of the popup
-3. Enter your Tana API Token and Target Node ID
-4. Click "Save Options"
+2. **Configure the Extension**:
+   - Open the extension options by right-clicking the extension icon and selecting "Options"
+   - In the "Paste Configuration" tab, paste the copied configuration
+   - Click "Parse Configuration" to extract the nodeIDs
+   - Enter your Tana API Token
+   - Click "Save Settings" to store your configuration
 
-### How to get your Tana API Token
+3. **Optional**: Set a custom target node ID if you want to save content to a specific location in Tana
 
-1. In the lower left corner of Tana, go to **Settings** > **API Tokens**
-2. Select which workspace you want to create a token for, and click **Create token**
-3. Click **Copy** to copy the token you just created
-
-### How to get your Target Node ID
-
-1. In Tana, navigate to your Inbox or any node where you want to save content
-2. Right-click on the node and select **Copy link**
-3. The Node ID is the part after `nodeid=` in the URL
-4. Example: From `https://app.tana.inc?nodeid=z-p8LdQk6I76`, the Node ID is `z-p8LdQk6I76`
-5. Alternatively, you can use `INBOX` to save to your Inbox
-
-## Usage
+## How to Use
 
 1. Navigate to any web page you want to save to Tana
 2. Click the Save to Tana extension icon in your Chrome toolbar
-3. Select which content you want to include:
-   - Page title
-   - Page content
-   - Preserve page structure (headers as parent nodes, paragraphs as nested content)
+3. Select which content you want to include (page title, content)
 4. Click "Save to Tana"
-5. The extension will save the content to your specified Tana node
+5. The content will be saved to Tana with the proper structure, fields, and supertag
 
-## How Structure Preservation Works
+## About the Tana Input API Integration
 
-When "Preserve page structure" is enabled:
+This extension uses the Tana Input API to create structured content in Tana:
 
-1. The extension identifies headers (h1, h2, h3, etc.) on the page
-2. Each header becomes a parent node in Tana
-3. Paragraphs and other content following a header become child nodes under that header
-4. This creates a hierarchical structure in Tana that mirrors the page's organization
-
-## API Limitations
-
-The Tana Input API has the following limitations:
-
-- 5000 character payload limit per call
-- Maximum of 100 nodes created per call
-- One call per second per token
-- Will not sync on workspaces with more than 750k nodes
-
-The extension automatically handles content to stay within these limits.
+- The page title becomes a node with the #save-to-tana supertag
+- URL, Author, Description, and Content are added as proper fields
+- All nodeIDs are automatically extracted from your Tana workspace
 
 ## Troubleshooting
 
 If you encounter issues:
 
-1. Ensure your API Token and Node ID are correctly configured
-2. Check that your Tana workspace has fewer than 750k nodes
-3. Verify your internet connection
-4. Try refreshing the page before saving
-5. For complex pages, try disabling "Preserve page structure" if you encounter errors
+1. Make sure you've extracted and pasted the configuration from your Tana node
+2. Check that your API token is correct
+3. Ensure you have the #save-to-tana supertag and fields in your Tana workspace
+4. Try refreshing the page before saving content
+5. Check the extension options to ensure all nodeIDs were properly extracted
 
 ## Privacy
 
-This extension stores your Tana API Token and Node ID locally in your browser's storage. This information is only used to authenticate with Tana's API and is never sent to any other servers.
+This extension only accesses the current page you're viewing and communicates with Tana using your API token. All data is processed locally in your browser and sent directly to your Tana workspace. No data is sent to any third-party servers.

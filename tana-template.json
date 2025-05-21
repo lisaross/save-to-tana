@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "supertags": [
+    {
+      "name": "save-to-tana",
+      "description": "Content saved from web pages via the Save to Tana Chrome extension",
+      "fields": [
+        {
+          "name": "URL",
+          "type": "url",
+          "description": "The URL of the saved web page"
+        },
+        {
+          "name": "Author",
+          "type": "text",
+          "description": "The author of the content"
+        },
+        {
+          "name": "Description",
+          "type": "text",
+          "description": "Description or summary of the content"
+        },
+        {
+          "name": "Content",
+          "type": "text",
+          "description": "The main content from the web page"
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "Save to Tana Configuration",
+      "description": "Configuration node for the Save to Tana Chrome extension. Use the extension's 'Copy Configuration' button when viewing this node to extract the necessary IDs.",
+      "supertags": ["save-to-tana"],
+      "children": [
+        {
+          "name": "Instructions",
+          "children": [
+            {
+              "name": "1. Make sure this node has the #save-to-tana supertag applied"
+            },
+            {
+              "name": "2. Open the Save to Tana extension options"
+            },
+            {
+              "name": "3. Click 'Extract Configuration' while viewing this node"
+            },
+            {
+              "name": "4. The extension will automatically extract all required IDs"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

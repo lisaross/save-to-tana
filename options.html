@@ -6,11 +6,11 @@
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-      max-width: 600px;
+      max-width: 700px;
       margin: 0 auto;
       padding: 20px;
     }
-    h1 {
+    h1, h2 {
       color: #4f46e5;
     }
     .form-group {
@@ -28,6 +28,15 @@
       border-radius: 4px;
       font-size: 14px;
     }
+    textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      font-size: 14px;
+      min-height: 120px;
+      font-family: monospace;
+    }
     button {
       background-color: #6366f1;
       color: white;
@@ -37,9 +46,14 @@
       cursor: pointer;
       font-weight: 500;
       transition: background-color 0.2s;
+      margin-right: 10px;
     }
     button:hover {
       background-color: #4f46e5;
+    }
+    button:disabled {
+      background-color: #c7d2fe;
+      cursor: not-allowed;
     }
     .status {
       margin-top: 15px;
@@ -74,42 +88,147 @@
     .instructions ol {
       padding-left: 20px;
     }
+    .config-section {
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    .config-section h3 {
+      margin-top: 0;
+    }
+    .field-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .field-name {
+      width: 100px;
+      font-weight: 500;
+    }
+    .field-id {
+      flex-grow: 1;
+    }
+    .extraction-section {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+    }
+    .note {
+      background-color: #e0f2fe;
+      color: #0369a1;
+      padding: 10px;
+      border-radius: 4px;
+      margin: 15px 0;
+    }
+    .tab-container {
+      margin-bottom: 20px;
+    }
+    .tab-buttons {
+      display: flex;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .tab-button {
+      padding: 10px 15px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: #6b7280;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .tab-button.active {
+      border-bottom: 2px solid #6366f1;
+      color: #4f46e5;
+    }
+    .tab-content {
+      display: none;
+      padding: 15px 0;
+    }
+    .tab-content.active {
+      display: block;
+    }
   </style>
 </head>
 <body>
   <h1>Save to Tana - Options</h1>
   
   <div class="instructions">
-    <h3>How to get your Tana API Token</h3>
+    <h3>Setup Instructions</h3>
     <ol>
-      <li>In the lower left corner of Tana, go to <strong>Settings</strong> > <strong>API Tokens</strong></li>
-      <li>Select which workspace you want to create a token for, and click <strong>Create token</strong></li>
-      <li>Click <strong>Copy</strong> to copy the token you just created</li>
+      <li>Navigate to your Tana node with the #save-to-tana supertag</li>
+      <li>Click the extraction button that appears next to the node (info icon)</li>
+      <li>The configuration will be copied to your clipboard</li>
+      <li>Paste the configuration in the "Paste Configuration" tab below</li>
+      <li>Enter your Tana API Token</li>
+      <li>Save your settings</li>
     </ol>
+  </div>
+  
+  <div class="tab-container">
+    <div class="tab-buttons">
+      <button class="tab-button active" data-tab="paste-config">Paste Configuration</button>
+      <button class="tab-button" data-tab="manual-config">Manual Configuration</button>
+    </div>
     
-    <h3>How to get your Inbox Node ID</h3>
-    <ol>
-      <li>In Tana, navigate to your Inbox or any node where you want to save content</li>
-      <li>Right-click on the node and select <strong>Copy link</strong></li>
-      <li>The Node ID is the part after <code>nodeid=</code> in the URL</li>
-      <li>Example: From <code>https://app.tana.inc?nodeid=z-p8LdQk6I76</code>, the Node ID is <code>z-p8LdQk6I76</code></li>
-      <li>Alternatively, you can use <code>INBOX</code> to save to your Inbox</li>
-    </ol>
+    <div id="paste-config" class="tab-content active">
+      <div class="form-group">
+        <label for="config-json">Paste Configuration JSON:</label>
+        <textarea id="config-json" placeholder="Paste the configuration JSON copied from Tana here..."></textarea>
+        <div class="help-text">
+          Click the extraction button on your Tana node, then paste the copied configuration here.
+        </div>
+      </div>
+      
+      <button id="parse-config">Parse Configuration</button>
+    </div>
+    
+    <div id="manual-config" class="tab-content">
+      <div class="form-group">
+        <label for="supertag-id">Supertag ID:</label>
+        <input type="text" id="supertag-id" placeholder="Enter the supertag ID for #save-to-tana">
+      </div>
+      
+      <h4>Field IDs:</h4>
+      <div class="field-row">
+        <span class="field-name">URL:</span>
+        <input type="text" id="url-field-id" class="field-id" placeholder="Enter URL field ID">
+      </div>
+      <div class="field-row">
+        <span class="field-name">Author:</span>
+        <input type="text" id="author-field-id" class="field-id" placeholder="Enter Author field ID">
+      </div>
+      <div class="field-row">
+        <span class="field-name">Description:</span>
+        <input type="text" id="description-field-id" class="field-id" placeholder="Enter Description field ID">
+      </div>
+      <div class="field-row">
+        <span class="field-name">Content:</span>
+        <input type="text" id="content-field-id" class="field-id" placeholder="Enter Content field ID">
+      </div>
+    </div>
   </div>
   
   <div class="form-group">
     <label for="api-key">Tana API Token:</label>
     <input type="text" id="api-key" placeholder="Enter your Tana API token">
-    <div class="help-text">Your API token is stored locally and is only used to authenticate with Tana.</div>
+    <div class="help-text">
+      To get your API token: In Tana, go to Settings > API Tokens > Create token
+    </div>
   </div>
   
   <div class="form-group">
-    <label for="node-id">Target Node ID:</label>
-    <input type="text" id="node-id" placeholder="Enter target node ID or use INBOX">
-    <div class="help-text">This is where your saved content will be stored in Tana.</div>
+    <label for="target-node-id">Target Node ID (optional):</label>
+    <input type="text" id="target-node-id" placeholder="Enter target node ID or use INBOX">
+    <div class="help-text">Leave empty to use the Tana Inbox as the default target.</div>
   </div>
   
-  <button id="save-options">Save Options</button>
+  <div class="note">
+    <strong>Note:</strong> All settings are stored locally in your browser and are only used to communicate with Tana.
+  </div>
+  
+  <button id="save-options">Save Settings</button>
+  <button id="reset-options">Reset</button>
   
   <div id="status" class="status"></div>
   
