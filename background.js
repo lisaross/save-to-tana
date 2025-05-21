@@ -51,10 +51,14 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 // Function to save data to Tana
 async function saveToTana(data) {
   try {
+    console.log('Starting saveToTana with data:', data);
+    
     // Get API key, target node ID, supertag ID, and field IDs from storage
     const result = await new Promise(resolve => {
       chrome.storage.sync.get(['apiKey', 'supertagId', 'fieldIds', 'targetNodeId'], resolve);
     });
+    
+    console.log('Retrieved configuration from storage:', result);
     
     if (!result.apiKey) {
       throw new Error('API Token not configured. Please go to extension options and set up your configuration.');
@@ -64,12 +68,19 @@ async function saveToTana(data) {
       throw new Error('Extension not fully configured. Please go to options and paste configuration from Tana.');
     }
     
-    const targetNodeId = result.targetNodeId || 'INBOX';
+    if (!result.targetNodeId) {
+      throw new Error('Target Node ID is required. Please go to options and specify a target node ID.');
+    }
+    
+    const targetNodeId = result.targetNodeId;
+    console.log('Using target node ID:', targetNodeId);
     
     // Format data for Tana API
     const tanaPayload = formatTanaPayload(data, targetNodeId, result.supertagId, result.fieldIds);
+    console.log('Formatted Tana payload:', tanaPayload);
     
     // Send data to Tana API
+    console.log('Sending request to Tana API...');
     const response = await fetch('https://europe-west1-tagr-prod.cloudfunctions.net/addToNodeV2', {
       method: 'POST',
       headers: {
@@ -79,12 +90,17 @@ async function saveToTana(data) {
       body: JSON.stringify(tanaPayload)
     });
     
+    console.log('API response status:', response.status);
+    
     if (!response.ok) {
       const errorText = await response.text();
+      console.error('API error response:', errorText);
       throw new Error(`API error (${response.status}): ${errorText}`);
     }
     
     const responseData = await response.json();
+    console.log('API success response:', responseData);
+    
     return {
       success: true,
       data: responseData
@@ -95,7 +111,7 @@ async function saveToTana(data) {
   }
 }
 
-// Format data for Tana API with structured fields
+// Format data for Tana API with parent nodes for each field instead of structured fields
 function formatTanaPayload(data, targetNodeId, supertagId, fieldIds) {
   // Create node name from title or URL, sanitizing to remove newlines
   let nodeName = data.title || data.url;
@@ -114,55 +130,40 @@ function formatTanaPayload(data, targetNodeId, supertagId, fieldIds) {
     children: []
   };
   
-  // Add URL field if available
-  if (data.url && fieldIds.URL) {
+  // Add URL as a child node (not a field)
+  if (data.url) {
     mainNode.children.push({
-      fieldId: fieldIds.URL,
-      children: [
-        {
-          dataType: "url",
-          name: data.url
-        }
-      ]
+      name: `URL: ${data.url}`
     });
   }
   
-  // Add Author field if available
-  if (data.author && fieldIds.Author) {
+  // Add Author as a child node (not a field)
+  if (data.author) {
     mainNode.children.push({
-      fieldId: fieldIds.Author,
-      children: [
-        {
-          name: sanitizeText(data.author)
-        }
-      ]
+      name: `Author: ${sanitizeText(data.author)}`
     });
   }
   
-  // Add Description field if available
-  if (data.description && fieldIds.Description) {
+  // Add Description as a child node (not a field)
+  if (data.description) {
     mainNode.children.push({
-      fieldId: fieldIds.Description,
-      children: [
-        {
-          name: sanitizeText(data.description)
-        }
-      ]
+      name: `Description: ${sanitizeText(data.description)}`
     });
   }
   
-  // Add Content field if available
-  if (data.content && fieldIds.Content) {
+  // Add Content as a child node (not a field)
+  if (data.content) {
     // Sanitize content - ensure it doesn't have formatting that would break Tana
     const sanitizedContent = sanitizeText(data.content);
     
+    // Limit content length to avoid API limits
+    const maxContentLength = 4000; // Safe limit to stay under Tana's 5000 character payload limit
+    const truncatedContent = sanitizedContent.length > maxContentLength 
+      ? sanitizedContent.substring(0, maxContentLength) + '... (content truncated due to length)'
+      : sanitizedContent;
+    
     mainNode.children.push({
-      fieldId: fieldIds.Content,
-      children: [
-        {
-          name: sanitizedContent
-        }
-      ]
+      name: `Content: ${truncatedContent}`
     });
   }
   

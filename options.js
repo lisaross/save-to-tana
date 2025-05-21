@@ -48,6 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     try {
       const config = JSON.parse(configJson);
+      console.log('Parsed configuration:', config);
       
       // Validate configuration
       if (!config.supertagId) {
@@ -68,8 +69,8 @@ document.addEventListener('DOMContentLoaded', function() {
       descriptionFieldIdInput.value = config.fieldIds.Description;
       contentFieldIdInput.value = config.fieldIds.Content;
       
-      // If target node ID was found, populate it
-      if (config.targetNodeId) {
+      // If target node ID was found, populate it (but don't override existing value)
+      if (config.targetNodeId && !targetNodeIdInput.value) {
         targetNodeIdInput.value = config.targetNodeId;
       }
       
@@ -90,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const authorFieldId = authorFieldIdInput.value.trim();
     const descriptionFieldId = descriptionFieldIdInput.value.trim();
     const contentFieldId = contentFieldIdInput.value.trim();
-    const targetNodeId = targetNodeIdInput.value.trim() || 'INBOX';
+    const targetNodeId = targetNodeIdInput.value.trim();
     
     if (!apiKey) {
       showError('API Token is required');
@@ -107,6 +108,11 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
     
+    if (!targetNodeId) {
+      showError('Target Node ID is required. Please specify where content should be saved.');
+      return;
+    }
+    
     chrome.storage.sync.set({
       apiKey: apiKey,
       supertagId: supertagId,
@@ -119,6 +125,17 @@ document.addEventListener('DOMContentLoaded', function() {
       targetNodeId: targetNodeId,
       lastUpdated: new Date().toISOString()
     }, function() {
+      console.log('Saved configuration:', {
+        apiKey: '***REDACTED***',
+        supertagId: supertagId,
+        fieldIds: {
+          URL: urlFieldId,
+          Author: authorFieldId,
+          Description: descriptionFieldId,
+          Content: contentFieldId
+        },
+        targetNodeId: targetNodeId
+      });
       showSuccess('Options saved successfully!');
     });
   });
@@ -143,6 +160,13 @@ document.addEventListener('DOMContentLoaded', function() {
   // Load options from storage
   function loadOptions() {
     chrome.storage.sync.get(['apiKey', 'supertagId', 'fieldIds', 'targetNodeId', 'lastUpdated'], function(result) {
+      console.log('Loaded configuration:', {
+        apiKey: result.apiKey ? '***REDACTED***' : undefined,
+        supertagId: result.supertagId,
+        fieldIds: result.fieldIds,
+        targetNodeId: result.targetNodeId
+      });
+      
       if (result.apiKey) {
         apiKeyInput.value = result.apiKey;
       }

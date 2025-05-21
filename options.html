@@ -148,6 +148,9 @@
     .tab-content.active {
       display: block;
     }
+    .required {
+      color: #ef4444;
+    }
   </style>
 </head>
 <body>
@@ -161,6 +164,7 @@
       <li>The configuration will be copied to your clipboard</li>
       <li>Paste the configuration in the "Paste Configuration" tab below</li>
       <li>Enter your Tana API Token</li>
+      <li>Enter your Target Node ID (required)</li>
       <li>Save your settings</li>
     </ol>
   </div>
@@ -185,32 +189,32 @@
     
     <div id="manual-config" class="tab-content">
       <div class="form-group">
-        <label for="supertag-id">Supertag ID:</label>
+        <label for="supertag-id">Supertag ID: <span class="required">*</span></label>
         <input type="text" id="supertag-id" placeholder="Enter the supertag ID for #save-to-tana">
       </div>
       
       <h4>Field IDs:</h4>
       <div class="field-row">
-        <span class="field-name">URL:</span>
+        <span class="field-name">URL: <span class="required">*</span></span>
         <input type="text" id="url-field-id" class="field-id" placeholder="Enter URL field ID">
       </div>
       <div class="field-row">
-        <span class="field-name">Author:</span>
+        <span class="field-name">Author: <span class="required">*</span></span>
         <input type="text" id="author-field-id" class="field-id" placeholder="Enter Author field ID">
       </div>
       <div class="field-row">
-        <span class="field-name">Description:</span>
+        <span class="field-name">Description: <span class="required">*</span></span>
         <input type="text" id="description-field-id" class="field-id" placeholder="Enter Description field ID">
       </div>
       <div class="field-row">
-        <span class="field-name">Content:</span>
+        <span class="field-name">Content: <span class="required">*</span></span>
         <input type="text" id="content-field-id" class="field-id" placeholder="Enter Content field ID">
       </div>
     </div>
   </div>
   
   <div class="form-group">
-    <label for="api-key">Tana API Token:</label>
+    <label for="api-key">Tana API Token: <span class="required">*</span></label>
     <input type="text" id="api-key" placeholder="Enter your Tana API token">
     <div class="help-text">
       To get your API token: In Tana, go to Settings > API Tokens > Create token
@@ -218,9 +222,11 @@
   </div>
   
   <div class="form-group">
-    <label for="target-node-id">Target Node ID (optional):</label>
-    <input type="text" id="target-node-id" placeholder="Enter target node ID or use INBOX">
-    <div class="help-text">Leave empty to use the Tana Inbox as the default target.</div>
+    <label for="target-node-id">Target Node ID: <span class="required">*</span></label>
+    <input type="text" id="target-node-id" placeholder="Enter target node ID">
+    <div class="help-text">
+      This is the node where content will be saved. To get a node ID, right-click on a node in Tana and select "Copy link". The node ID is the part after "nodeid=" in the URL.
+    </div>
   </div>
   
   <div class="note">

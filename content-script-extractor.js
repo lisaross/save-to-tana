@@ -144,22 +144,32 @@
     const fieldIds = {};
     const fieldElements = document.querySelectorAll('.editable.lockedName');
     
+    console.log('Found field elements:', fieldElements.length);
+    
     // Process each field
     for (const element of fieldElements) {
       const fieldName = element.textContent.trim();
       
       // Only process our specific fields
       if (['URL', 'Author', 'Description', 'Content'].includes(fieldName)) {
-        // Find the closest tuple container
-        const tupleContainer = findClosestTupleContainer(element);
-        if (tupleContainer) {
-          const fieldId = tupleContainer.getAttribute('data-id');
+        console.log(`Found field: ${fieldName}`);
+        
+        // Get the wrapper element that contains the field ID
+        const wrapperElement = element.closest('[data-editable-wrapper="true"]');
+        if (wrapperElement && wrapperElement.id) {
+          // Extract the last part of the ID (after the last pipe)
+          const idParts = wrapperElement.id.split('|');
+          const fieldId = idParts[idParts.length - 1];
+          
           if (fieldId) {
             fieldIds[fieldName] = fieldId;
+            console.log(`Extracted field ID for ${fieldName}: ${fieldId}`);
           }
         }
       }
     }
+
+    console.log('Extracted field IDs:', fieldIds);
 
     // Check if we found all required fields
     const requiredFields = ['URL', 'Author', 'Description', 'Content'];
@@ -179,19 +189,6 @@
       targetNodeId,
       timestamp: new Date().toISOString()
     };
-  }
-
-  // Helper function to find the closest tuple container
-  function findClosestTupleContainer(element) {
-    let current = element;
-    while (current) {
-      // Look for data-id attribute on a node container
-      if (current.hasAttribute('data-id') && current.classList.contains('NodeAsListElement-module_isTuple__MMJU5')) {
-        return current;
-      }
-      current = current.parentElement;
-    }
-    return null;
   }
 
   // Helper function to find the closest node container
