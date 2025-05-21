@@ -1,0 +1,70 @@
+{
+  "examples": [
+    {
+      "description": "Basic payload for saving a webpage to Tana",
+      "payload": {
+        "targetNodeId": "YOUR_TARGET_NODE_ID",
+        "nodes": [
+          {
+            "name": "Example Webpage Title",
+            "supertags": [
+              {
+                "id": "YOUR_SAVE_TO_TANA_SUPERTAG_ID"
+              }
+            ],
+            "children": [
+              {
+                "name": "URL: https://example.com"
+              },
+              {
+                "name": "Author: John Doe"
+              },
+              {
+                "name": "Description: This is an example webpage description"
+              },
+              {
+                "name": "Content: This is the main content of the webpage. Tana will automatically map these labeled nodes to your fields in the #save-to-tana template."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "Payload with truncated content for longer webpages",
+      "payload": {
+        "targetNodeId": "YOUR_TARGET_NODE_ID",
+        "nodes": [
+          {
+            "name": "Long Article Title",
+            "supertags": [
+              {
+                "id": "YOUR_SAVE_TO_TANA_SUPERTAG_ID"
+              }
+            ],
+            "children": [
+              {
+                "name": "URL: https://example.com/long-article"
+              },
+              {
+                "name": "Author: Jane Smith"
+              },
+              {
+                "name": "Description: A comprehensive article about a complex topic"
+              },
+              {
+                "name": "Content: This is the beginning of a very long article content. The content will be automatically truncated if it exceeds 4000 characters to stay within Tana's API limits... (content truncated due to length)"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "notes": {
+    "targetNodeId": "This is your Tana inbox node ID or any other node where you want to save content",
+    "supertagId": "This is the ID of your #save-to-tana supertag",
+    "fieldLabels": "The extension creates child nodes with labels like 'URL:', 'Author:', etc. which Tana automatically maps to your fields",
+    "apiLimits": "Tana's API has a 5000 character payload limit, so very long content is automatically truncated"
+  }
+}

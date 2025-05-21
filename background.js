@@ -1,32 +1,6 @@
 // Background script - handles API communication with Tana
 chrome.runtime.onInstalled.addListener(function() {
-  // Create context menu item for Tana pages
-  chrome.contextMenus.create({
-    id: "extractTanaConfig",
-    title: "Extract Save to Tana Configuration",
-    contexts: ["page"],
-    documentUrlPatterns: ["https://app.tana.inc/*"]
-  });
-});
-
-// Handle context menu clicks
-chrome.contextMenus.onClicked.addListener((info, tab) => {
-  if (info.menuItemId === "extractTanaConfig") {
-    chrome.tabs.sendMessage(tab.id, { action: 'extractTanaConfiguration' }, function(response) {
-      if (chrome.runtime.lastError) {
-        console.error('Error:', chrome.runtime.lastError);
-        return;
-      }
-      
-      if (!response || !response.success) {
-        console.error('Failed to extract configuration:', response ? response.error : 'No response');
-        return;
-      }
-      
-      // Configuration extracted successfully
-      console.log('Configuration extracted:', response.config);
-    });
-  }
+  // No context menu needed since we removed the extractor
 });
 
 // Handle messages from popup and content scripts
@@ -53,9 +27,9 @@ async function saveToTana(data) {
   try {
     console.log('Starting saveToTana with data:', data);
     
-    // Get API key, target node ID, supertag ID, and field IDs from storage
+    // Get API key, target node ID, and supertag ID from storage
     const result = await new Promise(resolve => {
-      chrome.storage.sync.get(['apiKey', 'supertagId', 'fieldIds', 'targetNodeId'], resolve);
+      chrome.storage.sync.get(['apiKey', 'supertagId', 'targetNodeId'], resolve);
     });
     
     console.log('Retrieved configuration from storage:', result);
@@ -64,8 +38,8 @@ async function saveToTana(data) {
       throw new Error('API Token not configured. Please go to extension options and set up your configuration.');
     }
     
-    if (!result.supertagId || !result.fieldIds) {
-      throw new Error('Extension not fully configured. Please go to options and paste configuration from Tana.');
+    if (!result.supertagId) {
+      throw new Error('Supertag ID not configured. Please go to options and specify your #save-to-tana supertag ID.');
     }
     
     if (!result.targetNodeId) {
@@ -76,7 +50,7 @@ async function saveToTana(data) {
     console.log('Using target node ID:', targetNodeId);
     
     // Format data for Tana API
-    const tanaPayload = formatTanaPayload(data, targetNodeId, result.supertagId, result.fieldIds);
+    const tanaPayload = formatTanaPayload(data, targetNodeId, result.supertagId);
     console.log('Formatted Tana payload:', tanaPayload);
     
     // Send data to Tana API
@@ -112,7 +86,7 @@ async function saveToTana(data) {
 }
 
 // Format data for Tana API with parent nodes for each field instead of structured fields
-function formatTanaPayload(data, targetNodeId, supertagId, fieldIds) {
+function formatTanaPayload(data, targetNodeId, supertagId) {
   // Create node name from title or URL, sanitizing to remove newlines
   let nodeName = data.title || data.url;
   
