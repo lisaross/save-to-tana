@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     if (!supertagId) {
-      showStatus('Save to Tana Supertag ID is required', true);
+      showStatus('Save to Tana Supertag ID is required. Please extract schema.', true);
       return;
     }
     
@@ -120,6 +120,10 @@ document.addEventListener('DOMContentLoaded', function() {
   apiKeyInput.addEventListener('input', validateForm);
   targetNodeIdInput.addEventListener('input', validateForm);
   supertagIdInput.addEventListener('input', validateForm);
+  fieldIdUrlInput.addEventListener('input', validateForm);
+  fieldIdAuthorInput.addEventListener('input', validateForm);
+  fieldIdDescriptionInput.addEventListener('input', validateForm);
+  fieldIdContentInput.addEventListener('input', validateForm);
   
   // Function to extract schema from textarea
   function extractSchemaFromTextarea() {
@@ -142,12 +146,12 @@ document.addEventListener('DOMContentLoaded', function() {
       if (!node) throw new Error('No nodes found in schema payload.');
       // Extract supertagId
       const supertagId = node.supertags && node.supertags[0] && node.supertags[0].id ? node.supertags[0].id : '';
+      supertagIdInput.value = supertagId;
       // Extract field IDs by name from children
       const fieldIds = {};
       if (Array.isArray(node.children)) {
         for (const child of node.children) {
           if (child.type === 'field' && child.attributeId) {
-            // Try to infer field name by dataType or order
             if (child.children && child.children[0] && child.children[0].dataType === 'url') fieldIds['URL'] = child.attributeId;
             else if (fieldIds['Author'] === undefined) fieldIds['Author'] = child.attributeId;
             else if (fieldIds['Description'] === undefined) fieldIds['Description'] = child.attributeId;
@@ -167,7 +171,7 @@ document.addEventListener('DOMContentLoaded', function() {
         Object.entries(fieldIds).map(([k, v]) => `${k} ID: ${v}`).join('\n');
       // Store in chrome.storage
       chrome.storage.sync.set({
-        tanaSupertagId: supertagId,
+        supertagId: supertagId,
         tanaFieldIds: fieldIds
       }, function() {
         showStatus('Schema extracted and saved!');
