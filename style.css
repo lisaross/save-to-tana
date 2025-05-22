@@ -579,4 +579,24 @@ input[type="checkbox"], input[type="radio"] {
   padding: 10px 12px;
   font-family: inherit;
   box-sizing: border-box;
+}
+
+.notice-bar {
+  width: 100%;
+  background: #23272e;
+  color: #8b949e;
+  text-align: center;
+  font-size: 0.98em;
+  padding: 8px 0 7px 0;
+  margin: 0;
+  border-bottom: 1px solid #30363d;
+  letter-spacing: 0.01em;
+}
+.notice-bar a {
+  color: #58a6ff;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+.notice-bar a:hover {
+  color: #f0f6fc;
 } 
