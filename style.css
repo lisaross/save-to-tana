@@ -376,7 +376,7 @@ input[type="checkbox"], input[type="radio"] {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 32px;
+  padding: 0 40px;
   height: 64px;
   position: sticky;
   top: 0;
@@ -419,7 +419,7 @@ input[type="checkbox"], input[type="radio"] {
     "api fields";
   gap: 32px;
   max-width: 1200px;
-  margin: 48px auto 0 auto;
+  margin: 32px auto 0 auto;
   padding: 0 40px 40px 40px;
 }
 .bento-instructions {
@@ -519,15 +519,28 @@ input[type="checkbox"], input[type="radio"] {
 /* --- END BENTO LAYOUT --- */
 
 .instructions-list {
-  font-size: 1.15rem;
+  font-size: 0.92rem;
   color: #c9d1d9;
-  margin-left: 1.2em;
+  margin-left: 0 !important;
+  padding-left: 0 !important;
   margin-bottom: 0;
   margin-top: 0;
-  padding-left: 1.2em;
+  list-style-position: inside;
 }
 .instructions-list li {
   margin-bottom: 0.5em;
+}
+.instructions-list code {
+  display: inline;
+  background: #22272e;
+  color: #c9d1d9;
+  padding: 0 2px;
+  border-radius: 1px;
+  font-size: 0.98em;
+  box-shadow: none;
+  border: none;
+  margin: 0;
+  white-space: pre-wrap;
 }
 
 .bento-card label {
