@@ -150,6 +150,19 @@ pre, code {
   margin-bottom: 10px;
 }
 
+.help-text code {
+  display: inline;
+  background: #22272e;
+  color: #c9d1d9;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 0.98em;
+  box-shadow: none;
+  border: none;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
 ::-webkit-scrollbar {
   width: 8px;
   background: #161b22;

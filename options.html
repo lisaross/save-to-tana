@@ -64,7 +64,16 @@
       <div class="help-text">Generate this in Tana: Settings &gt; API Tokens</div>
       <label for="targetNodeId">Target Node ID:</label>
       <input type="text" id="targetNodeId" placeholder="Enter your target node ID (e.g., inbox)">
-      <div class="help-text">This is where content will be saved in Tana</div>
+      <div class="help-text">
+        <ol style="margin: 0 0 0 1.2em; padding: 0; font-size: 0.98em;">
+          <li>Right-click on the node you want to copy the ID from</li>
+          <li>Select "Copy link" from the context menu</li>
+          <li>The link will be copied to your clipboard in the format:<br>
+            <code>https://app.tana.inc?nodeid=ABCD1234</code>
+          </li>
+          <li>The part after <b>nodeid=</b> is your node ID (e.g., <code>ABCD1234</code>)</li>
+        </ol>
+      </div>
     </section>
     <section class="bento-card bento-fields">
       <h2>Field Attribute IDs</h2>
