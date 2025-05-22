@@ -7,8 +7,8 @@ document.addEventListener('DOMContentLoaded', function() {
   const notConfiguredDiv = document.getElementById('not-configured');
   
   // Check if extension is configured
-  chrome.storage.sync.get(['apiKey', 'supertagId', 'fieldIds'], function(result) {
-    if (!result.apiKey || !result.supertagId || !result.fieldIds) {
+  chrome.storage.sync.get(['apiKey', 'supertagId', 'targetNodeId'], function(result) {
+    if (!result.apiKey || !result.supertagId || !result.targetNodeId) {
       saveButton.disabled = true;
       notConfiguredDiv.style.display = 'block';
     }

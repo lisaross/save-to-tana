@@ -71,6 +71,61 @@
   <h1>Save to Tana Options</h1>
   
   <div class="form-group">
+    <label for="tanaSchema">Paste Tana Supertag Schema (API Payload Example):</label>
+    <textarea id="tanaSchema" rows="8" style="width:100%;font-family:monospace;resize:vertical;" placeholder="Paste your Tana API payload JSON here (from Show API Schema > Copy payload)"></textarea>
+    <button id="extractSchemaButton" style="margin-top:8px;">Extract Schema</button>
+    <div class="help-text">
+      <strong>Instructions:</strong><br>
+      1. In Tana, press <b>Cmd-K</b> (or Ctrl-K on Windows/Linux).<br>
+      2. Search for and select <b>Show API Schema</b>.<br>
+      3. Click the <b>Copy payload</b> button.<br>
+      4. Paste the copied JSON payload above, then click <b>Extract Schema</b>.<br>
+      5. The extension will extract and display the field IDs below.<br>
+      6. Fill out the rest of the configuration and click <b>Save Options</b>.<br>
+      <br>
+      <b>Example JSON:</b>
+      <pre style="background:#f5f5f5;padding:8px;border-radius:4px;overflow-x:auto;">
+{
+  "nodes": [
+    {
+      "name": "New node",
+      "supertags": [
+        { "id": "R1RGcNI0g1ui" }
+      ],
+      "children": [
+        { "type": "field", "attributeId": "uhrM6T8Fw_cV", "children": [{ "dataType": "url", "name": "https://tana.inc/" }] },
+        { "type": "field", "attributeId": "JFfGHKU_YHmO", "children": [{ "name": "Field value" }] },
+        { "type": "field", "attributeId": "T9BS_5h4EMQH", "children": [{ "name": "Field value" }] },
+        { "type": "field", "attributeId": "ErJaHS4DcnL-", "children": [{ "name": "Field value" }] }
+      ]
+    }
+  ]
+}
+      </pre>
+    </div>
+  </div>
+
+  <div class="form-group" id="extractedFields" style="display:none;">
+    <label>Extracted Field IDs:</label>
+    <pre id="extractedFieldIds" style="background:#f5f5f5;padding:8px;border-radius:4px;"></pre>
+  </div>
+
+  <div class="form-group" id="fieldTemplate">
+    <label>Field Attribute IDs (Edit if needed):</label>
+    <div style="background:#f9f9f9;padding:12px 16px;border-radius:4px;">
+      <label for="fieldIdUrl"><b>URL</b> Field ID:</label>
+      <input type="text" id="fieldIdUrl" placeholder="e.g. uhrM6T8Fw_cV" style="width:100%;margin-bottom:8px;">
+      <label for="fieldIdAuthor"><b>Author</b> Field ID:</label>
+      <input type="text" id="fieldIdAuthor" placeholder="e.g. JFfGHKU_YHmO" style="width:100%;margin-bottom:8px;">
+      <label for="fieldIdDescription"><b>Description</b> Field ID:</label>
+      <input type="text" id="fieldIdDescription" placeholder="e.g. T9BS_5h4EMQH" style="width:100%;margin-bottom:8px;">
+      <label for="fieldIdContent"><b>Content</b> Field ID:</label>
+      <input type="text" id="fieldIdContent" placeholder="e.g. ErJaHS4DcnL-" style="width:100%;">
+    </div>
+    <div class="help-text">These are the attribute IDs for each field in your Tana supertag schema. They will be auto-filled if you extract a schema, but you can edit them if needed before saving options.</div>
+  </div>
+  
+  <div class="form-group">
     <label for="apiKey">Tana API Token:</label>
     <input type="text" id="apiKey" placeholder="Enter your Tana API token">
     <div class="help-text">Generate this in Tana: Settings > API Tokens</div>
