@@ -23,8 +23,9 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         
         // Extract content
         let content = mainElement.innerText;
-        if (content.length > 4000) {
-          content = content.substring(0, 4000) + '... (content truncated due to character limit)';
+        // Remove the 4000-character truncation. Optionally, cap at 100000 characters.
+        if (content.length > 100000) {
+          content = content.substring(0, 100000) + '... (content truncated due to very large page)';
         }
         pageData.content = content;
       }

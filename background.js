@@ -96,53 +96,6 @@ async function saveToTana(data) {
   }
 }
 
-// --- Chunking utility ---
-/**
- * Splits content into chunks of up to maxSize characters, preserving paragraph and sentence boundaries when possible.
- * @param {string} content - The content to split.
- * @param {number} maxSize - Maximum size of each chunk.
- * @returns {string[]} Array of chunked strings.
- */
-function splitIntoChunks(content, maxSize) {
-  const paragraphs = content.split(/\n\n+/);
-  const chunks = [];
-  let currentChunk = '';
-
-  for (const paragraph of paragraphs) {
-    if ((currentChunk + paragraph).length > maxSize) {
-      if (currentChunk) {
-        chunks.push(currentChunk);
-        currentChunk = '';
-      }
-      if (paragraph.length > maxSize) {
-        const sentences = paragraph.match(/[^.!?]+[.!?]+/g) || [paragraph];
-        for (const sentence of sentences) {
-          if (sentence.length > maxSize) {
-            for (let i = 0; i < sentence.length; i += maxSize) {
-              chunks.push(sentence.slice(i, i + maxSize));
-            }
-          } else {
-            if ((currentChunk + sentence).length > maxSize) {
-              chunks.push(currentChunk);
-              currentChunk = sentence;
-            } else {
-              currentChunk += sentence;
-            }
-          }
-        }
-      } else {
-        currentChunk = paragraph;
-      }
-    } else {
-      currentChunk += (currentChunk ? '\n\n' : '') + paragraph;
-    }
-  }
-  if (currentChunk) {
-    chunks.push(currentChunk);
-  }
-  return chunks;
-}
-
 // Sanitize text for Tana API
 function sanitizeText(text) {
   if (!text) return '';
