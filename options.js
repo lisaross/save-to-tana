@@ -64,22 +64,22 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Validate required fields
     if (!apiKey) {
-      showStatus('API Token is required', true);
+      showToast('API Token is required', true);
       return;
     }
     
     if (!targetNodeId) {
-      showStatus('Target Node ID is required', true);
+      showToast('Target Node ID is required', true);
       return;
     }
     
     if (!supertagId) {
-      showStatus('Save to Tana Supertag ID is required. Please extract schema.', true);
+      showToast('Save to Tana Supertag ID is required. Please extract schema.', true);
       return;
     }
     
     if (!tanaFieldIds.URL || !tanaFieldIds.Author || !tanaFieldIds.Description || !tanaFieldIds.Content) {
-      showStatus('All field IDs are required.', true);
+      showToast('All field IDs are required.', true);
       return;
     }
     
@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
       supertagId: supertagId,
       tanaFieldIds: tanaFieldIds
     }, function() {
-      showStatus('Configuration saved successfully!');
+      showToast('Configuration saved successfully!');
     });
   }
   
@@ -105,14 +105,13 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   // Function to show status message
-  function showStatus(message, isError = false) {
-    statusMessage.textContent = message;
-    statusMessage.className = isError ? 'status error' : 'status success';
-    
-    // Clear message after 5 seconds
-    setTimeout(function() {
-      statusMessage.textContent = '';
-      statusMessage.className = 'status';
+  function showToast(message, isError = false) {
+    if (!toast) return;
+    toast.textContent = message;
+    toast.className = 'toast' + (isError ? ' error' : ' success') + ' show';
+    setTimeout(() => {
+      toast.className = 'toast' + (isError ? ' error' : ' success');
+      toast.textContent = '';
     }, 5000);
   }
   
@@ -174,7 +173,7 @@ document.addEventListener('DOMContentLoaded', function() {
         supertagId: supertagId,
         tanaFieldIds: fieldIds
       }, function() {
-        showStatus('Schema extracted and saved!');
+        showToast('Schema extracted and saved!');
       });
     } catch (e) {
       schemaErrorDiv.textContent = 'Failed to extract schema info: ' + e.message;
@@ -188,6 +187,20 @@ document.addEventListener('DOMContentLoaded', function() {
   schemaErrorDiv.className = 'status error';
   schemaErrorDiv.style.display = 'none';
   tanaSchemaInput.parentNode.insertBefore(schemaErrorDiv, tanaSchemaInput.nextSibling);
+
+  // Example JSON toggle logic
+  const toggleBtn = document.getElementById('toggleExampleJson');
+  const exampleJsonBlock = document.getElementById('exampleJsonBlock');
+  const toggleLabel = document.getElementById('toggleExampleJsonLabel');
+
+  if (toggleBtn && exampleJsonBlock && toggleLabel) {
+    toggleBtn.addEventListener('click', () => {
+      const expanded = toggleBtn.getAttribute('aria-expanded') === 'true';
+      toggleBtn.setAttribute('aria-expanded', String(!expanded));
+      exampleJsonBlock.style.display = expanded ? 'none' : 'block';
+      toggleLabel.textContent = expanded ? 'Show Example JSON' : 'Hide Example JSON';
+    });
+  }
 });
 
 // --- TEST FUNCTION FOR SCHEMA CLEANING ---
