@@ -6,6 +6,9 @@
 > - Improving page formatting and extraction
 > 
 > Please [create an issue](https://github.com/lisaross/save-to-tana/issues) with your ideas or problems you encounter!
+>
+> **Download:**
+> Get the latest version of the extension from the [Releases page](https://github.com/lisaross/save-to-tana/releases). Download the ZIP file and load it in Chrome as described below.
 
 # Save to Tana Chrome Extension
 
@@ -21,10 +24,10 @@ A Chrome extension that saves web page content to Tana with structured fields an
 
 ## Installation Instructions
 
-1. Download and unzip the `save-to-tana-api-updated.zip` file
+1. Download and unzip the latest release ZIP from the [Releases page](https://github.com/lisaross/save-to-tana/releases)
 2. Open Chrome and navigate to `chrome://extensions/`
 3. Enable "Developer mode" by toggling the switch in the top right corner
-4. Click "Load unpacked" and select the unzipped `save-to-tana` folder
+4. Click "Load unpacked" and select the unzipped `dist` folder
 5. The extension should now appear in your Chrome toolbar
 
 ## Setup Instructions
@@ -74,3 +77,43 @@ If you encounter issues:
 ## Privacy
 
 This extension only accesses the current page you're viewing and communicates with Tana using your API token. All data is processed locally in your browser and sent directly to your Tana workspace. No data is sent to any third-party servers.
+
+---
+
+## Developer Notes
+
+### TypeScript Conversion & Build System
+
+- The extension uses TypeScript 5.4+ with strict type checking
+- Modular code organization and improved error handling
+- Built with Vite for fast, modern bundling
+- See below for project structure and build commands
+
+### Project Structure
+
+```
+save-to-tana-ts/
+├── dist/               # Compiled extension files (generated)
+├── src/                # TypeScript source files
+│   ├── background.ts   # Background script
+│   ├── content.ts      # Content script
+│   ├── options.ts      # Options page script
+│   ├── popup.ts        # Popup script
+│   ├── tanaPayloadBuilder.ts  # Tana payload builder
+│   ├── types/          # TypeScript interfaces
+│   │   └── index.ts    # Shared type definitions
+│   └── utils/          # Utility functions
+│       └── textUtils.ts # Text processing utilities
+└── static/             # Static assets
+    ├── images/         # Extension icons
+    ├── manifest.json   # Extension manifest
+    ├── options.html    # Options page HTML
+    ├── popup.html      # Popup HTML
+    └── style.css       # Shared styles
+```
+
+### Build Commands
+
+- `npm run build` - Build the extension for production
+- `npm run dev` - Build with watch mode for development
+- `npm run package` - Build and copy static assets to dist/

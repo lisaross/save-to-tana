@@ -1,0 +1,25 @@
+{
+  "name": "save-to-tana-ts",
+  "version": "1.0.0",
+  "description": "Save web content to Tana - TypeScript version",
+  "main": "index.js",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "clean": "rm -rf ./dist/*",
+    "package": "npm run build && npm run copy-assets",
+    "copy-assets": "cp -r ./static/* ./dist/"
+  },
+  "keywords": [
+    "tana",
+    "chrome-extension",
+    "typescript"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/chrome": "^0.0.260",
+    "@types/node": "^22.15.21",
+    "vite": "^6.3.5"
+  }
+}

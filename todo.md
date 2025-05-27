@@ -1,1 +1,0 @@
-- make sure api key isn't in the logs when published to others
