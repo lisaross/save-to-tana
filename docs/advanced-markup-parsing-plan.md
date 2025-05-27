@@ -6,18 +6,19 @@ This document outlines the plan for implementing advanced markup parsing using c
 ---
 
 ## 1. Setup & Dependencies
-- Use the browser's native DOM API in content scripts for extraction.
+- Use the browser's native DOM API in content scripts for extraction and restructuring.
+- **Use [Mozilla Readability](https://github.com/mozilla/readability) to extract the main content** from web pages.
 - No need for Cheerio or server-side HTML parsing libraries.
 
 ## 2. Core Extraction Logic
-- **Access Live DOM:** Use a content script to traverse the current page's DOM.
+- **Extract Main Content:** Use Readability in the content script to identify and extract the main article/content from the page.
+- **Access Live DOM:** After extraction, use the DOM API to traverse and restructure the content as needed.
 
 ## 3. Content Extraction
 - **Identify Main Content:**
-  - Use heuristics (e.g., look for <main>, <article>, or largest <div> with text).
-  - Exclude sidebars, headers, footers, ads, and navs.
+  - Use Readability to extract the main content (removes sidebars, headers, footers, ads, and navs).
 - **Structure Extraction:**
-  - Traverse main content, building a tree structure:
+  - Traverse the extracted content, building a tree structure:
     - Headings (h1–h6) become parent nodes (not included in Tana output, just for structure).
     - Paragraphs, lists, and list items become children.
     - Lists are parent nodes with list items as children.
@@ -33,7 +34,7 @@ This document outlines the plan for implementing advanced markup parsing using c
 
 ## 5. Testing & Validation
 - Write unit tests for:
-  - Main content extraction
+  - Main content extraction (using Readability)
   - Structure mapping
   - Formatting preservation
   - Chunking logic
@@ -46,4 +47,5 @@ This document outlines the plan for implementing advanced markup parsing using c
 ---
 
 ## References
+- [Mozilla Readability](https://github.com/mozilla/readability)
 - [Tana Input API](https://tana.inc/docs/input-api) 
