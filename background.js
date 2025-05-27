@@ -32,12 +32,12 @@ async function saveToTana(data) {
     
     // Get API key, target node ID, and schema info from storage
     const result = await new Promise(resolve => {
-      chrome.storage.sync.get(['apiKey', 'targetNodeId', 'tanaSupertagId', 'tanaFieldIds'], resolve);
+      chrome.storage.sync.get(['apiKey', 'targetNodeId', 'supertagId', 'tanaFieldIds'], resolve);
     });
     
     console.log('Retrieved configuration from storage:', result);
     console.log('apiKey:', result.apiKey);
-    console.log('tanaSupertagId:', result.tanaSupertagId);
+    console.log('supertagId:', result.supertagId);
     console.log('targetNodeId:', result.targetNodeId);
     console.log('tanaFieldIds:', result.tanaFieldIds);
     
@@ -45,7 +45,7 @@ async function saveToTana(data) {
       throw new Error('API Token not configured. Please go to extension options and set up your configuration.');
     }
     
-    if (!result.tanaSupertagId) {
+    if (!result.supertagId) {
       throw new Error('Supertag ID not configured. Please extract and save your Tana schema in options.');
     }
     
@@ -61,7 +61,7 @@ async function saveToTana(data) {
     console.log('Using target node ID:', targetNodeId);
     
     // Build the payload using the schema
-    const tanaPayload = buildTanaPayload(data, targetNodeId, result.tanaSupertagId, result.tanaFieldIds);
+    const tanaPayload = buildTanaPayload(data, targetNodeId, result.supertagId, result.tanaFieldIds);
     console.log('Formatted Tana payload:', tanaPayload);
     
     // Send data to Tana API
