@@ -4,7 +4,7 @@ import {
   TanaPayload, 
   TanaNode,
   TanaNodeChildContent
-} from '../types';
+} from '../types/index.ts';
 import { sanitizeText, splitIntoChunks } from './utils/textUtils';
 
 /**

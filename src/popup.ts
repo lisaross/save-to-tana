@@ -1,4 +1,4 @@
-import { SaveToTanaRequest } from '../types';
+import { SaveToTanaRequest } from 'types';
 
 /**
  * Popup controller interfaces

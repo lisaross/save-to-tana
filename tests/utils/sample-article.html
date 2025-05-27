@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sample Article for Extraction</title>
+  <style>
+    body { font-family: sans-serif; }
+    .navbar, .sidebar, .footer { background: #eee; padding: 10px; }
+    .main-content { margin: 20px; }
+  </style>
+</head>
+<body>
+  <div class="navbar">Navigation Bar - Should be excluded</div>
+  <div class="sidebar">Sidebar - Should be excluded</div>
+  <div class="main-content">
+    <h1>Article Title</h1>
+    <p>This is the introduction paragraph. It should be a child of the Article Title.</p>
+    <h2>Section One</h2>
+    <p>First section paragraph. This should be a child of Section One.</p>
+    <ul>
+      <li>First bullet point</li>
+      <li>Second bullet point</li>
+    </ul>
+    <h3>Subsection</h3>
+    <p>Subsection paragraph. This should be a child of Subsection, which is a child of Section One.</p>
+    <ol>
+      <li>First ordered item</li>
+      <li>Second ordered item</li>
+    </ol>
+    <h2>Section Two</h2>
+    <p>Second section paragraph. This should be a child of Section Two.</p>
+    <p><strong>Bold text</strong> and <em>italic text</em> should be preserved.</p>
+    <p>Here is a <a href="https://example.com">link</a> to Example.com.</p>
+  </div>
+  <div class="footer">Footer - Should be excluded</div>
+</body>
+</html> 

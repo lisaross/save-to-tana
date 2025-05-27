@@ -4,7 +4,7 @@ import {
   TanaConfig, 
   SaveToTanaRequest,
   TanaPayload
-} from '../types';
+} from 'types';
 import { buildTanaPayload } from './tanaPayloadBuilder';
 
 /**

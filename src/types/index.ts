@@ -44,7 +44,7 @@ export interface TanaPayload {
 export interface TanaNode {
   name: string;
   supertags: TanaSupertag[];
-  children: TanaNodeChild[];
+  children: (TanaNodeChild | TanaNodeChildContent)[];
 }
 
 // Tana supertag
