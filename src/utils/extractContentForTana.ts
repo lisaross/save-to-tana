@@ -1,15 +1,20 @@
 import type { TanaNode, TanaNodeChild, TanaNodeChildContent } from '../types/index';
 import { Readability } from '@mozilla/readability';
+import { sanitizeText } from './textUtils';
 
 /**
- * Extracts the main content from a DOM Document and structures it for the Tana input API.
- * Handles headers, links, lists, and inline formatting, and builds a hierarchy based on heading levels.
- * Enhanced to handle pages with poor semantic structure.
+ * Extracts content from a DOM Document using structural sections as natural separators.
+ * Does NOT use headings for organization - organizes by larger structural elements instead.
+ * Creates single nodes for each major section, respecting Tana API constraints.
  * @param doc - The DOM Document to extract content from
  * @returns Array of TanaNode objects ready for the Tana input API
  */
-
 export function extractContentForTana(doc: Document): TanaNode[] {
+  // Tana API constraints
+  const MAX_NODE_NAME_LENGTH = 800; // Increased for content with links
+  const MAX_NODE_CONTENT_LENGTH = 2000; // Increased for better content preservation
+  const MAX_SECTIONS = 50; // Limit sections to stay under 100 node limit (with children)
+  
   // Use the correct Node/Element constructors for the environment
   const NodeCtor = doc.defaultView?.Node;
   const ElementCtor = doc.defaultView?.Element;
@@ -44,251 +49,367 @@ export function extractContentForTana(doc: Document): TanaNode[] {
     }
   }
 
-  // Helper to sanitize node names (remove newlines, collapse whitespace)
-  function sanitizeNodeName(name: string): string {
-    return name.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
-  }
-
-  // Helper to check if text looks like a person's name (simple heuristic)
-  function looksLikePersonName(text: string): boolean {
-    // Remove line breaks and trim
-    const cleanText = sanitizeNodeName(text);
-    
-    // Be much more conservative - only flag things that are clearly person names
-    // Avoid false positives on titles, headers, etc.
-    if (cleanText.length > 25) return false; // Too long to be a typical name
-    if (cleanText.length < 6) return false; // Too short to be a full name
-    
-    // Must have at least 2 words (first and last name)
-    const words = cleanText.split(/\s+/);
-    if (words.length < 2 || words.length > 4) return false;
-    
-    // Common non-name patterns to exclude
-    if (cleanText.includes('Test') || 
-        cleanText.includes('Header') ||
-        cleanText.includes('Section') ||
-        cleanText.includes('Article') ||
-        cleanText.includes('Title') ||
-        cleanText.includes('platform') || 
-        cleanText.includes('community') ||
-        cleanText.includes('business') ||
-        cleanText.includes('tool') ||
-        cleanText.includes('content')) {
-      return false;
+  // Helper to sanitize node names for Tana API (remove newlines, collapse whitespace, limit length)
+  function sanitizeNodeName(name: string, maxLength: number = MAX_NODE_NAME_LENGTH): string {
+    const sanitized = sanitizeText(name);
+    if (sanitized.length <= maxLength) {
+      return sanitized;
     }
     
-    // Check if it matches a person name pattern (all words capitalized, only letters)
-    return /^[A-Z][a-z]+(?:\s+[A-Z][a-z]*)*(?:\s+[A-Z]\.)?(?:\s+[A-Z][a-z]+)*$/.test(cleanText);
-  }
-
-  // Helper to check if element is likely part of a carousel/testimonial section
-  function isCarouselElement(element: Element): boolean {
-    const classList = element.className || '';
-    const parentClass = element.parentElement?.className || '';
+    // Check if the content contains URLs or markdown links - be more generous with length
+    const hasLinks = sanitized.includes('](') || sanitized.includes('http');
+    if (hasLinks) {
+      // For content with links, try to preserve the full link if possible
+      const linkMatch = sanitized.match(/\[([^\]]+)\]\(([^)]+)\)/);
+      if (linkMatch && linkMatch[0].length < maxLength) {
+        // Try to include the full link and some surrounding context
+        const linkStart = sanitized.indexOf(linkMatch[0]);
+        const beforeLink = sanitized.substring(0, linkStart);
+        const afterLink = sanitized.substring(linkStart + linkMatch[0].length);
+        
+        const availableSpace = maxLength - linkMatch[0].length;
+        const beforeTruncated = beforeLink.length > availableSpace / 2 
+          ? beforeLink.substring(0, Math.floor(availableSpace / 2)) + '...'
+          : beforeLink;
+        const afterTruncated = afterLink.length > availableSpace / 2
+          ? '...' + afterLink.substring(afterLink.length - Math.floor(availableSpace / 2))
+          : afterLink;
+        
+        return (beforeTruncated + linkMatch[0] + afterTruncated).trim();
+      }
+    }
     
-    return classList.includes('swiper') || 
-           classList.includes('carousel') || 
-           classList.includes('slide') ||
-           parentClass.includes('swiper') ||
-           parentClass.includes('carousel') ||
-           // Check for flex containers with images (common carousel pattern)
-           (classList.includes('flex') && !!element.querySelector('img')) ||
-           // Check for builder pattern with profile images
-           (classList.includes('builder') && !!element.querySelector('h3') && !!element.querySelector('img'));
+    // Try to truncate at sentence boundary first
+    const sentences = sanitized.match(/[^.!?]+[.!?]+/g);
+    if (sentences && sentences.length > 1) {
+      let truncated = '';
+      for (const sentence of sentences) {
+        if ((truncated + sentence).length <= maxLength) {
+          truncated += sentence;
+        } else {
+          break;
+        }
+      }
+      if (truncated.length > maxLength * 0.5) {
+        return truncated.trim();
+      }
+    }
+    
+    // Truncate at word boundary if possible
+    const truncated = sanitized.substring(0, maxLength);
+    const lastSpace = truncated.lastIndexOf(' ');
+    if (lastSpace > maxLength * 0.7) { // Only use word boundary if it's not too short
+      return truncated.substring(0, lastSpace) + '...';
+    }
+    
+    return truncated + '...';
   }
 
-  // Use Readability to get the main article content
+  // Helper to split long content into manageable chunks
+  function splitContentIntoChunks(content: string, maxLength: number = MAX_NODE_CONTENT_LENGTH): string[] {
+    if (content.length <= maxLength) {
+      return [content];
+    }
+    
+    const chunks: string[] = [];
+    const sentences = content.match(/[^.!?]+[.!?]+/g) || [content];
+    let currentChunk = '';
+    
+    for (const sentence of sentences) {
+      const trimmedSentence = sentence.trim();
+      if (!trimmedSentence) continue;
+      
+      if ((currentChunk + ' ' + trimmedSentence).length > maxLength) {
+        if (currentChunk) {
+          chunks.push(currentChunk.trim());
+          currentChunk = '';
+        }
+        
+        // If single sentence is too long, split it carefully to preserve links
+        if (trimmedSentence.length > maxLength) {
+          const linkMatches = Array.from(trimmedSentence.matchAll(/\[([^\]]+)\]\(([^)]+)\)/g));
+          if (linkMatches.length > 0) {
+            // Try to keep links intact when splitting
+            let remaining = trimmedSentence;
+            while (remaining.length > maxLength) {
+              let splitPoint = maxLength;
+              // Look for a safe split point that doesn't break links
+              for (const match of linkMatches) {
+                const linkStart = remaining.indexOf(match[0]);
+                const linkEnd = linkStart + match[0].length;
+                if (linkStart < maxLength && linkEnd > maxLength) {
+                  // Link would be split, move split point before the link
+                  splitPoint = Math.max(linkStart - 1, maxLength / 2);
+                  break;
+                }
+              }
+              const chunk = remaining.substring(0, splitPoint);
+              chunks.push(chunk + (splitPoint < remaining.length ? '...' : ''));
+              remaining = remaining.substring(splitPoint);
+            }
+            if (remaining.trim()) {
+              chunks.push(remaining.trim());
+            }
+          } else {
+            // No links, split normally
+            for (let i = 0; i < trimmedSentence.length; i += maxLength) {
+              const chunk = trimmedSentence.slice(i, i + maxLength);
+              chunks.push(chunk + (i + maxLength < trimmedSentence.length ? '...' : ''));
+            }
+          }
+        } else {
+          currentChunk = trimmedSentence;
+        }
+      } else {
+        currentChunk += (currentChunk ? ' ' : '') + trimmedSentence;
+      }
+    }
+    
+    if (currentChunk.trim()) {
+      chunks.push(currentChunk.trim());
+    }
+    
+    return chunks.length > 0 ? chunks : [content.substring(0, maxLength) + '...'];
+  }
+
+  // Helper to check if element should be excluded (navigation, sidebars, footers, etc.)
+  function shouldExcludeElement(element: Element): boolean {
+    const tagName = element.tagName.toLowerCase();
+    const className = element.className || '';
+    const id = element.id || '';
+    const role = element.getAttribute('role') || '';
+    
+    // Skip non-content elements
+    if (['script', 'style', 'noscript', 'head', 'meta', 'link'].includes(tagName)) {
+      return true;
+    }
+    
+    // Skip navigation elements
+    if (tagName === 'nav' || role === 'navigation') {
+      return true;
+    }
+    
+    // Skip elements with navigation-related classes/IDs
+    const navPatterns = [
+      'nav', 'navigation', 'menu', 'header', 'footer', 'sidebar', 'aside',
+      'breadcrumb', 'toolbar', 'topbar', 'bottombar', 'social', 'share',
+      'cookie', 'banner', 'popup', 'modal', 'overlay', 'fixed', 'sticky',
+      'advertisement', 'ads', 'promo'
+    ];
+    
+    const elementText = (className + ' ' + id).toLowerCase();
+    if (navPatterns.some(pattern => elementText.includes(pattern))) {
+      return true;
+    }
+    
+    // Skip elements that are positioned outside the main flow
+    const style = element.getAttribute('style') || '';
+    if (style.includes('position: fixed') || style.includes('position: absolute')) {
+      return true;
+    }
+    
+    // Skip hidden elements
+    if (style.includes('display: none') || style.includes('visibility: hidden')) {
+      return true;
+    }
+    
+    return false;
+  }
+
+  // Helper to check if element is a main structural section (NO HEADING LOGIC)
+  function isContentSection(element: Element): boolean {
+    const tagName = element.tagName.toLowerCase();
+    const className = element.className || '';
+    const id = element.id || '';
+    
+    // Primary structural elements that typically contain content
+    if (['section', 'article', 'main', 'div', 'p', 'ul', 'ol', 'blockquote', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName)) {
+      // For paragraphs, lists, blockquotes, and headings, they're always content sections
+      if (['p', 'ul', 'ol', 'blockquote', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName)) {
+        return true;
+      }
+      
+      // For structural elements, check if they have meaningful content indicators
+      const contentIndicators = [
+        'content', 'text', 'body', 'article', 'section', 'block', 'panel', 
+        'card', 'item', 'feature', 'intro', 'description', 'summary'
+      ];
+      
+      const elementText = (className + ' ' + id).toLowerCase();
+      const hasContentClass = contentIndicators.some(indicator => 
+        elementText.includes(indicator)
+      );
+      
+      // Also consider divs that are direct children of body or main containers
+      const isTopLevelDiv = tagName === 'div' && (
+        element.parentElement?.tagName.toLowerCase() === 'body' ||
+        element.parentElement?.tagName.toLowerCase() === 'main' ||
+        element.parentElement?.className.includes('container') ||
+        element.parentElement?.className.includes('wrapper') ||
+        element.parentElement?.className.includes('content')
+      );
+      
+      return hasContentClass || isTopLevelDiv || ['section', 'article', 'main'].includes(tagName);
+    }
+    
+    return false;
+  }
+
+  // Helper to extract clean content from a section (NO HEADING EXTRACTION)
+  function extractSectionContent(section: Element): string {
+    // Clone the section to avoid modifying the original
+    const sectionClone = section.cloneNode(true) as Element;
+    
+    // Remove navigation and excluded elements
+    const excludedElements = sectionClone.querySelectorAll('nav, .nav, .navigation, .menu, .breadcrumb, .social, .share, script, style');
+    for (const el of Array.from(excludedElements)) {
+      el.remove();
+    }
+    
+    // Get text content and clean it up
+    let text = '';
+    for (const child of Array.from(sectionClone.childNodes)) {
+      if (child.nodeType === (NodeCtor?.TEXT_NODE || 3)) {
+        text += child.textContent || '';
+      } else if (child.nodeType === (NodeCtor?.ELEMENT_NODE || 1)) {
+        const childEl = child as Element;
+        text += getFormattedText(childEl);
+      }
+    }
+    
+    return sanitizeText(text);
+  }
+
+  // Try to get main content area first
   let main: HTMLElement | null = null;
+  
   try {
-    // IMPORTANT: Clone the document to prevent Readability from modifying the original page
-    const docClone = doc.cloneNode(true) as Document;
-    const article = new Readability(docClone).parse();
-    if (article && article.content) {
-      // Create a temporary DOM to parse the Readability HTML
-      const tempDiv = doc.createElement('div');
-      tempDiv.innerHTML = article.content;
-      main = tempDiv;
-    }
+    // Look for main content area
+    main = doc.querySelector('main') || 
+           doc.querySelector('[role="main"]') || 
+           doc.querySelector('.main-content') ||
+           doc.querySelector('#main-content') ||
+           doc.querySelector('.content') ||
+           doc.body;
   } catch (e) {
-    // Fallback to doc.body if Readability fails
     main = doc.body;
   }
-  if (!main) main = doc.body;
+  
   if (!main) return [];
 
-  // Helper to determine heading level (returns 1-6 for h1-h6, or 0 for non-heading)
-  function getHeadingLevel(node: Element): number {
-    const match = node.tagName.match(/^H([1-6])$/);
-    return match ? parseInt(match[1], 10) : 0;
-  }
+  // Find all content sections within the main area (NO HEADING-BASED ORGANIZATION)
+  const contentSections: Array<{ element: Element; content: string }> = [];
+  const processedElements = new Set<Element>();
 
-  // Helper to check if we should treat content as meaningful sections
-  function shouldCreateSection(element: Element, level: number): boolean {
-    if (level === 0) return false; // Not a heading
-    
-    const text = sanitizeNodeName(element.textContent || '');
-    
-    // Skip if it looks like a person's name
-    if (looksLikePersonName(text)) return false;
-    
-    // Skip if it's in a carousel
-    if (isCarouselElement(element)) return false;
-    
-    // For test content and normal articles, be more lenient with heading length
-    // Skip very short headings that are likely not content sections, but allow reasonable headings
-    if (text.length < 5) return false;
-    
-    return true;
-  }
-
-  // Enhanced function to process content with better semantic understanding
-  function extractContentSections(element: Element): Array<{ content: string, isSection: boolean, level: number }> {
-    const sections: Array<{ content: string, isSection: boolean, level: number }> = [];
-    const processedElements = new Set<Element>();
-    
-    // Helper to extract clean text from an element, avoiding nested duplicates
-    function getElementText(el: Element): string {
-      let text = '';
-      for (const child of Array.from(el.childNodes)) {
-        if (child.nodeType === (NodeCtor?.TEXT_NODE || 3)) {
-          text += child.textContent || '';
-        } else if (child.nodeType === (NodeCtor?.ELEMENT_NODE || 1)) {
-          const childEl = child as Element;
-          // Only include child text if the child isn't a significant container
-          if (['SPAN', 'STRONG', 'EM', 'B', 'I', 'A'].includes(childEl.tagName)) {
-            text += getFormattedText(childEl);
-          }
-        }
+  function findContentSections(container: Element) {
+    for (const child of Array.from(container.children)) {
+      if (processedElements.has(child) || shouldExcludeElement(child)) {
+        continue;
       }
-      return sanitizeNodeName(text);
-    }
-    
-    // Process all elements in document order
-    function walkElements(parent: Element) {
-      for (const child of Array.from(parent.children)) {
-        if (processedElements.has(child)) continue;
+
+      if (isContentSection(child)) {
+        const content = extractSectionContent(child);
         
-        // Skip non-content elements
-        if (['SCRIPT', 'STYLE', 'NOSCRIPT', 'HEAD'].includes(child.tagName)) {
+        // Only include sections with meaningful content
+        if (content.length > 10 && content.length < 8000) {
+          contentSections.push({
+            element: child,
+            content
+          });
+          processedElements.add(child);
+          
+          // Stop if we have enough sections
+          if (contentSections.length >= MAX_SECTIONS) {
+            return;
+          }
           continue;
         }
-        
-        const headingLevel = getHeadingLevel(child);
-        
-        if (headingLevel > 0) {
-          // This is a heading
-          const text = getElementText(child);
-          
-          if (shouldCreateSection(child, headingLevel)) {
-            sections.push({ content: text, isSection: true, level: headingLevel });
-            processedElements.add(child);
-            continue; // Don't process children of headings
-          }
-        }
-        
-        // Check for meaningful content elements
-        if (['P', 'DIV', 'SPAN', 'SECTION', 'ARTICLE', 'UL', 'OL', 'LI'].includes(child.tagName)) {
-          const text = getElementText(child);
-          
-          // Handle lists specially
-          if (['UL', 'OL'].includes(child.tagName)) {
-            // Process list items individually
-            const listItems = Array.from(child.querySelectorAll('li'))
-              .map(li => getElementText(li))
-              .filter(text => text.length > 0);
-            
-            for (const item of listItems) {
-              if (item.length > 2 && !sections.some(s => s.content === item)) {
-                sections.push({ content: item, isSection: false, level: 0 });
-              }
-            }
-            processedElements.add(child);
-            continue;
-          }
-          
-          // Only include substantial, non-duplicate content
-          if (text.length > 5 && 
-              text.length < 500 && // Increased from 200 to allow longer paragraphs
-              !looksLikePersonName(text) && 
-              !isCarouselElement(child) &&
-              !sections.some(s => s.content === text) &&
-              !text.match(/^(Get started|Email address|Enter your|Click here|Read more)$/i)) {
-            
-            sections.push({ content: text, isSection: false, level: 0 });
-            processedElements.add(child);
-            continue; // Don't process children of content elements
-          }
-        }
-        
-        // If this element wasn't processed, check its children
-        if (!processedElements.has(child)) {
-          walkElements(child);
-        }
       }
-    }
-    
-    walkElements(element);
-    return sections;
-  }
-
-  // Extract content sections
-  const contentSections = extractContentSections(main);
-  
-  // Check if we have a good hierarchical structure
-  const hasGoodHierarchy = contentSections.some(s => s.isSection && s.level > 0);
-  
-  if (!hasGoodHierarchy) {
-    // No main headings found - create a simple list of key content
-    const meaningfulContent = contentSections
-      .filter(s => s.content.length > 20 && !looksLikePersonName(s.content))
-      .slice(0, 10) // Limit to top 10 pieces of content
-      .map(s => ({ name: s.content }));
-    
-    if (meaningfulContent.length > 0) {
-      const rootNode: TanaNode = {
-        name: 'Extracted Content',
-        supertags: [],
-        children: meaningfulContent as (TanaNodeChild | TanaNodeChildContent)[],
-      };
       
-      return [rootNode];
-    }
-  }
-
-  // Build hierarchy from sections (existing logic)
-  function buildHierarchy(sections: Array<{ content: string, isSection: boolean, level: number }>): TanaNodeChildContent[] {
-    const stack: Array<{ level: number, node: TanaNodeChildContent }> = [];
-    const root: TanaNodeChildContent = { name: 'Root', children: [] };
-    stack.push({ level: 0, node: root });
-
-    for (const section of sections) {
-      if (section.isSection && section.level > 0) {
-        // Heading: create a new node
-        const headingNode: TanaNodeChildContent = { name: section.content, children: [] };
-        // Find the parent (nearest lower level)
-        while (stack.length > 0 && stack[stack.length - 1].level >= section.level) {
-          stack.pop();
-        }
-        stack[stack.length - 1].node.children!.push(headingNode);
-        stack.push({ level: section.level, node: headingNode });
-      } else if (!section.isSection) {
-        // Non-heading: add as child to the most recent heading
-        if (section.content && section.content.trim()) {
-          stack[stack.length - 1].node.children!.push({ name: section.content });
-        }
+      // Recursively check children if this wasn't processed as a section
+      if (!processedElements.has(child) && contentSections.length < MAX_SECTIONS) {
+        findContentSections(child);
       }
     }
-    return root.children || [];
   }
 
-  // Build the hierarchy
-  const hierarchy = buildHierarchy(contentSections);
+  findContentSections(main);
 
-  // Only include the hierarchical children as children of the main node
+  // If we didn't find enough sections, be more liberal in what we consider content
+  if (contentSections.length < 3) {
+    // Look for any elements with substantial text content
+    const allElements = main.querySelectorAll('div, section, article, p, ul, ol, blockquote');
+    for (const element of Array.from(allElements)) {
+      if (processedElements.has(element) || shouldExcludeElement(element)) {
+        continue;
+      }
+      
+      const content = extractSectionContent(element);
+      if (content.length > 15 && content.length < 5000) {
+        contentSections.push({
+          element,
+          content
+        });
+        processedElements.add(element);
+        
+        if (contentSections.length >= MAX_SECTIONS) break;
+      }
+    }
+  }
+
+  // Create nodes from content sections (NO HEADING-BASED NAMES)
+  const children: TanaNodeChildContent[] = [];
+  
+  for (const section of contentSections.slice(0, MAX_SECTIONS)) {
+    // Use the first part of content as the node name (no heading extraction)
+    const firstSentence = section.content.split(/[.!?]/)[0];
+    const nodeName = sanitizeNodeName(firstSentence, 200); // Reasonable length for auto-generated names
+    
+    // Split content into chunks if it's too long
+    const contentChunks = splitContentIntoChunks(section.content);
+    
+    if (contentChunks.length === 1) {
+      // Single chunk - use the content directly as the node name
+      children.push({
+        name: sanitizeNodeName(contentChunks[0])
+      });
+    } else {
+      // Multiple content chunks - create child nodes for each
+      const contentChildren = contentChunks.map((chunk) => ({
+        name: sanitizeText(chunk)
+      }));
+      
+      children.push({
+        name: nodeName,
+        children: contentChildren
+      });
+    }
+  }
+
+  // If no sections found, create a single node with page content
+  if (children.length === 0) {
+    const pageContent = extractSectionContent(main);
+    if (pageContent.length > 15) {
+      const contentChunks = splitContentIntoChunks(pageContent);
+      
+      if (contentChunks.length === 1) {
+        children.push({
+          name: sanitizeNodeName(contentChunks[0])
+        });
+      } else {
+        const pageName = sanitizeNodeName(doc.title || 'Page Content');
+        children.push({
+          name: pageName,
+          children: contentChunks.map(chunk => ({ name: sanitizeText(chunk) }))
+        });
+      }
+    }
+  }
+
   const rootNode: TanaNode = {
-    name: 'Extracted Content',
+    name: sanitizeNodeName(doc.title || 'Page Content'),
     supertags: [],
-    children: hierarchy as (TanaNodeChild | TanaNodeChildContent)[],
+    children: children as (TanaNodeChild | TanaNodeChildContent)[],
   };
 
   return [rootNode];

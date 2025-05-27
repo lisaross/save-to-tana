@@ -10,8 +10,8 @@ interface ExtractOptions {
 }
 
 interface ExtractRequest {
-  action: 'extractContent';
-  options: ExtractOptions;
+  action: 'extractContent' | 'ping';
+  options?: ExtractOptions;
 }
 
 interface PageData {
@@ -33,8 +33,14 @@ interface PageData {
 chrome.runtime.onMessage.addListener((
   request: ExtractRequest,
   sender: chrome.runtime.MessageSender,
-  sendResponse: (response: PageData) => void
+  sendResponse: (response: PageData | { pong: boolean }) => void
 ) => {
+  // Handle ping requests to check if content script is loaded
+  if (request.action === 'ping') {
+    sendResponse({ pong: true });
+    return true;
+  }
+  
   if (request.action === 'extractContent') {
     const options = request.options || { includeContent: true, includeTitle: true };
     
@@ -85,8 +91,6 @@ chrome.runtime.onMessage.addListener((
   // Must return true for asynchronous response
   return true;
 });
-
-
 
 /**
  * Extract author from meta tags and common page elements
