@@ -19,9 +19,12 @@
   "license": "ISC",
   "devDependencies": {
     "@types/chrome": "^0.0.323",
+    "@types/jsdom": "^21.1.7",
     "@types/node": "^22.15.21",
     "copyfiles": "^2.4.1",
+    "jsdom": "^26.1.0",
     "rimraf": "^6.0.1",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "vitest": "^3.1.4"
   }
 }
