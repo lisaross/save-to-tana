@@ -1,21 +1,20 @@
-# Advanced Markup Parsing with Cheerio for Tana Integration
+# Extract and Structure Web Content Using Content Script DOM Traversal for Tana API
 
 ## Overview
-This document outlines the plan for implementing advanced markup parsing using Cheerio to extract and structure web content for the Tana input API.
+This document outlines the plan for implementing advanced markup parsing using content script DOM traversal to extract and structure web content for the Tana input API.
 
 ---
 
 ## 1. Setup & Dependencies
-- Install Cheerio and supporting libraries (e.g., axios or node-fetch for fetching HTML).
-- Ensure TypeScript types are included.
+- Use the browser's native DOM API in content scripts for extraction.
+- No need for Cheerio or server-side HTML parsing libraries.
 
 ## 2. Core Extraction Logic
-- **Fetch HTML:** Utility to fetch and load HTML content from a given URL.
-- **Parse with Cheerio:** Use Cheerio to load and traverse the DOM.
+- **Access Live DOM:** Use a content script to traverse the current page's DOM.
 
 ## 3. Content Extraction
 - **Identify Main Content:**
-  - Use heuristics (e.g., look for `<main>`, `<article>`, or largest `<div>` with text).
+  - Use heuristics (e.g., look for <main>, <article>, or largest <div> with text).
   - Exclude sidebars, headers, footers, ads, and navs.
 - **Structure Extraction:**
   - Traverse main content, building a tree structure:
@@ -47,5 +46,4 @@ This document outlines the plan for implementing advanced markup parsing using C
 ---
 
 ## References
-- [Cheerio Documentation](https://cheerio.js.org/)
 - [Tana Input API](https://tana.inc/docs/input-api) 
