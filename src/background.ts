@@ -72,12 +72,10 @@ async function saveToTana(data: SaveData): Promise<SaveResponse> {
     
     // Add hierarchical content nodes if available
     if (data.hierarchicalNodes && data.hierarchicalNodes.length > 0 && tanaPayload.nodes.length > 0) {
-      // Filter out flat text nodes - only include nodes that have children (hierarchical structure)
-      const hierarchicalNodes = data.hierarchicalNodes[0].children.filter(node => 
-        node.children && Array.isArray(node.children) && node.children.length > 0
-      );
-      tanaPayload.nodes[0].children.push(...hierarchicalNodes);
-      console.log('Added hierarchical content nodes:', hierarchicalNodes.length);
+      // Include all content nodes - both hierarchical and flat
+      const contentNodes = data.hierarchicalNodes[0].children || [];
+      tanaPayload.nodes[0].children.push(...contentNodes);
+      console.log('Added content nodes:', contentNodes.length);
     }
     
     // Check if we need to chunk the payload
@@ -122,14 +120,12 @@ async function saveToTana(data: SaveData): Promise<SaveResponse> {
     
     // Now chunk the hierarchical content and add as children to the main node
     if (data.hierarchicalNodes && data.hierarchicalNodes.length > 0) {
-      const hierarchicalNodes = data.hierarchicalNodes[0].children.filter(node => 
-        node.children && Array.isArray(node.children) && node.children.length > 0
-      );
+      const contentNodes = data.hierarchicalNodes[0].children || [];
       
       // Create a single payload with just the content (no wrapper node) and chunk it
       const contentPayload = {
         targetNodeId: createdNodeId,
-        nodes: hierarchicalNodes.map(node => ({
+        nodes: contentNodes.map((node: any) => ({
           name: ('name' in node ? node.name : 'Content') || 'Content',
           supertags: [] as { id: string }[],
           children: (node.children || []) as (TanaNodeChild | TanaNodeChildContent)[]

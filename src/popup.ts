@@ -24,6 +24,12 @@ export class PopupController {
   private includeContentCheckbox: HTMLInputElement;
   private includeTitleCheckbox: HTMLInputElement;
   private notConfiguredDiv: HTMLDivElement;
+  private progressContainer: HTMLDivElement;
+  private progressFill: HTMLDivElement;
+  private progressText: HTMLDivElement;
+  
+  // Progress tracking
+  private progressInterval: number | null = null;
 
   /**
    * Initialize the popup controller
@@ -36,6 +42,9 @@ export class PopupController {
     this.includeContentCheckbox = document.getElementById('include-content') as HTMLInputElement;
     this.includeTitleCheckbox = document.getElementById('include-title') as HTMLInputElement;
     this.notConfiguredDiv = document.getElementById('not-configured') as HTMLDivElement;
+    this.progressContainer = document.getElementById('progress-container') as HTMLDivElement;
+    this.progressFill = document.getElementById('progress-fill') as HTMLDivElement;
+    this.progressText = document.getElementById('progress-text') as HTMLDivElement;
     
     // Initialize the popup
     this.initializePopup();
@@ -82,6 +91,7 @@ export class PopupController {
     this.saveButton.disabled = true;
     this.saveButton.textContent = 'Saving...';
     this.updateStatus({ message: '', isError: false });
+    this.showProgress('Extracting content...');
     
     const options: ExtractOptions = {
       includeContent: this.includeContentCheckbox.checked,
@@ -129,6 +139,9 @@ export class PopupController {
           return;
         }
         
+        // Update progress
+        this.updateProgress(25, 'Content extracted, sending to Tana...');
+        
         // Send data to background script
         this.sendToBackground(response);
       }
@@ -145,28 +158,69 @@ export class PopupController {
       data: data
     };
     
-    chrome.runtime.sendMessage(request, (result) => {
-      this.saveButton.disabled = false;
-      this.saveButton.textContent = 'Save to Tana';
+    // Estimate if this will be chunked based on content size
+    const estimatedSize = JSON.stringify(data).length;
+    const willBeChunked = estimatedSize > 4500;
+    
+    if (willBeChunked) {
+      // For chunked content, show more realistic progress updates
+      this.updateProgress(30, 'Preparing large content for upload...');
       
-      if (!result) {
-        this.handleError('No response from the extension. Please try again.');
-        return;
-      }
+      // Simulate progress updates for chunked content
+      let progressPercent = 30;
+      this.progressInterval = window.setInterval(() => {
+        if (progressPercent < 85) {
+          progressPercent += 5;
+          this.updateProgress(progressPercent, 'Uploading content chunks...');
+        }
+      }, 800); // Update every 800ms
       
-      if (!result.success) {
-        this.handleError(result.error || 'Unknown error occurred');
-        return;
-      }
+      chrome.runtime.sendMessage(request, (result) => {
+        this.clearProgressInterval();
+        this.handleBackgroundResponse(result, willBeChunked);
+      });
+    } else {
+      // For simple content, quick progress
+      this.updateProgress(50, 'Uploading to Tana...');
       
-      // Handle response with chunking information
-      let successMessage = 'Saved to Tana successfully!';
-      if (result.data && result.data.contentChunks > 0) {
-        successMessage = `Saved to Tana successfully! (Content split into ${result.data.contentChunks} parts due to size)`;
-      }
-      
+      chrome.runtime.sendMessage(request, (result) => {
+        this.handleBackgroundResponse(result, willBeChunked);
+      });
+    }
+  }
+
+  /**
+   * Handle response from background script
+   * @param result - Response from background script
+   * @param wasChunked - Whether content was chunked
+   */
+  private handleBackgroundResponse(result: any, wasChunked: boolean): void {
+    this.saveButton.disabled = false;
+    this.saveButton.textContent = 'Save to Tana';
+    
+    if (!result) {
+      this.handleError('No response from the extension. Please try again.');
+      return;
+    }
+    
+    if (!result.success) {
+      this.handleError(result.error || 'Unknown error occurred');
+      return;
+    }
+    
+    // Handle response with chunking information
+    this.updateProgress(100, 'Complete!');
+    
+    let successMessage = 'Saved to Tana successfully!';
+    if (result.data && result.data.contentChunks > 0) {
+      successMessage = `Saved to Tana successfully! (Content split into ${result.data.contentChunks} parts due to size)`;
+    }
+    
+    // Show success after a brief delay to let users see 100% completion
+    setTimeout(() => {
+      this.hideProgress();
       this.showSuccess(successMessage);
-    });
+    }, 500);
   }
 
   /**
@@ -176,6 +230,7 @@ export class PopupController {
   private handleError(message: string): void {
     this.saveButton.disabled = false;
     this.saveButton.textContent = 'Save to Tana';
+    this.hideProgress();
     this.updateStatus({ message, isError: true });
   }
 
@@ -199,6 +254,45 @@ export class PopupController {
   private updateStatus(status: StatusMessage): void {
     this.statusDiv.textContent = status.message;
     this.statusDiv.className = 'status' + (status.isError ? ' error' : status.message ? ' success' : '');
+  }
+
+  /**
+   * Show progress bar
+   * @param text - Progress text to display
+   */
+  private showProgress(text: string = 'Processing...'): void {
+    this.progressContainer.style.display = 'block';
+    this.progressText.textContent = text;
+    this.progressFill.style.width = '0%';
+    this.updateStatus({ message: '', isError: false });
+  }
+
+  /**
+   * Update progress bar
+   * @param progress - Progress percentage (0-100)
+   * @param text - Progress text to display
+   */
+  private updateProgress(progress: number, text: string): void {
+    this.progressFill.style.width = `${Math.min(100, Math.max(0, progress))}%`;
+    this.progressText.textContent = text;
+  }
+
+  /**
+   * Hide progress bar
+   */
+  private hideProgress(): void {
+    this.clearProgressInterval();
+    this.progressContainer.style.display = 'none';
+  }
+
+  /**
+   * Clear progress interval if running
+   */
+  private clearProgressInterval(): void {
+    if (this.progressInterval !== null) {
+      window.clearInterval(this.progressInterval);
+      this.progressInterval = null;
+    }
   }
 }
 
