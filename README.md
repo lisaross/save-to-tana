@@ -1,3 +1,12 @@
+> **⚠️ This extension is a proof of concept and not fully ready for general use.**
+> 
+> Some sites work, some sites don't. I'm actively working to make it more stable and useful:
+> - Refactoring to TypeScript
+> - Adding Cheerio for better HTML parsing
+> - Improving page formatting and extraction
+> 
+> Please [create an issue](https://github.com/lisaross/save-to-tana/issues) with your ideas or problems you encounter!
+
 # Save to Tana Chrome Extension
 
 A Chrome extension that saves web page content to Tana with structured fields and supertags using the Tana Input API.
