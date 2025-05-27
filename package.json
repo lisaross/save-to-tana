@@ -1,0 +1,27 @@
+{
+  "name": "save-to-tana",
+  "version": "1.0.0",
+  "description": "Save web content to Tana",
+  "main": "index.js",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "clean": "rimraf ./dist/*",
+    "package": "npm run build && npm run copy-assets",
+    "copy-assets": "copyfiles -f ./static/* ./dist/ && copyfiles -f ./static/images/* ./dist/images/"
+  },
+  "keywords": [
+    "tana",
+    "chrome-extension",
+    "typescript"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/chrome": "^0.0.323",
+    "@types/node": "^22.15.21",
+    "copyfiles": "^2.4.1",
+    "rimraf": "^6.0.1",
+    "vite": "^6.3.5"
+  }
+}
