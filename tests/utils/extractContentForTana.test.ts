@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { describe, it, expect } from 'vitest';
 import { JSDOM } from 'jsdom';
 import { extractContentForTana } from '../../src/utils/extractContentForTana';

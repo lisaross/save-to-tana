@@ -4,12 +4,17 @@
   "description": "Save web content to Tana",
   "main": "index.js",
   "scripts": {
-    "build": "vite build",
-    "dev": "vite",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "test:chunking": "npx tsx tests/runChunkingTests.ts",
+    "build": "npm run test && vite build --config vite.build.config.ts",
+    "build:only": "vite build --config vite.build.config.ts",
+    "dev": "vite --config vite.build.config.ts",
     "clean": "rimraf ./dist/*",
     "package": "npm run build && npm run copy-assets",
-    "copy-assets": "copyfiles -f ./static/* ./dist/ && copyfiles -f ./static/images/* ./dist/images/",
-    "test:chunking": "npx tsx tests/runChunkingTests.ts"
+    "copy-assets": "copyfiles -f ./static/* ./dist/ && copyfiles -f ./static/images/* ./dist/images/"
   },
   "keywords": [
     "tana",

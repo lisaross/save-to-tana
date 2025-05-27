@@ -79,17 +79,19 @@ export function extractContentForTana(doc: Document): TanaNode[] {
     for (const child of Array.from(element.children)) {
       const level = getHeadingLevel(child);
       if (level > 0) {
+        // Heading: add it and continue (headings are structural)
         result.push({ node: child, level });
       } else if (child.tagName === 'UL' || child.tagName === 'OL') {
-        // Flatten list items
+        // List: flatten list items
         for (const li of Array.from(child.children)) {
           result.push({ node: li, level: 0 });
         }
-      } else {
+      } else if (child.tagName === 'P' || child.tagName === 'LI' || 
+                 child.tagName === 'BLOCKQUOTE' || child.tagName === 'PRE') {
+        // Content elements: add them directly (don't recurse into their children)
         result.push({ node: child, level: 0 });
-      }
-      // Recursively flatten children of non-heading, non-list nodes
-      if (level === 0 && child.tagName !== 'UL' && child.tagName !== 'OL') {
+      } else {
+        // Container elements (DIV, SECTION, etc.): recurse into children without adding the container itself
         result.push(...flattenNodes(child));
       }
     }
