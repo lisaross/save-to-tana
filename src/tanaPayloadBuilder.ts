@@ -21,6 +21,23 @@ export function buildTanaPayload(
   supertagId: string, 
   fieldIds: TanaFieldIds
 ): TanaPayload {
+  // Validate required parameters
+  if (!data) {
+    throw new Error('SaveData is required');
+  }
+  if (!targetNodeId || !targetNodeId.trim()) {
+    throw new Error('Valid targetNodeId is required');
+  }
+  if (!supertagId || !supertagId.trim()) {
+    throw new Error('Valid supertagId is required');
+  }
+  if (!fieldIds) {
+    throw new Error('TanaFieldIds is required');
+  }
+
+  // Build the main node
+  …
+}
   // Input validation
   if (!data) {
     throw new Error('Missing required parameter: data');
