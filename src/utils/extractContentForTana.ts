@@ -51,7 +51,9 @@ export function extractContentForTana(doc: Document): TanaNode[] {
   // Use Readability to get the main article content
   let main: HTMLElement | null = null;
   try {
-    const article = new Readability(doc).parse();
+    // IMPORTANT: Clone the document to prevent Readability from modifying the original page
+    const docClone = doc.cloneNode(true) as Document;
+    const article = new Readability(docClone).parse();
     if (article && article.content) {
       // Create a temporary DOM to parse the Readability HTML
       const tempDiv = doc.createElement('div');

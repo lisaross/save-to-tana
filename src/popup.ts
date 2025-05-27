@@ -159,7 +159,13 @@ export class PopupController {
         return;
       }
       
-      this.showSuccess('Saved to Tana successfully!');
+      // Handle response with chunking information
+      let successMessage = 'Saved to Tana successfully!';
+      if (result.data && result.data.contentChunks > 0) {
+        successMessage = `Saved to Tana successfully! (Content split into ${result.data.contentChunks} parts due to size)`;
+      }
+      
+      this.showSuccess(successMessage);
     });
   }
 

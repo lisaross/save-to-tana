@@ -6,6 +6,7 @@ import {
   TanaPayload
 } from 'types';
 import { buildTanaPayload } from './tanaPayloadBuilder';
+import { chunkTanaPayload, getChunkingInfo } from './utils/payloadChunker';
 
 /**
  * Background script - handles API communication with Tana
@@ -77,8 +78,107 @@ async function saveToTana(data: SaveData): Promise<SaveResponse> {
       console.log('Added hierarchical content nodes:', hierarchicalNodes.length);
     }
     
-    // Send data to Tana API
-    const responseData = await sendToTanaApi(tanaPayload, result.apiKey);
+    // Check if we need to chunk the payload
+    const payloadSize = JSON.stringify(tanaPayload).length;
+    const needsChunking = payloadSize > 4500; // Conservative limit
+    
+    if (!needsChunking) {
+      // Small payload - send as-is
+      console.log(`Payload size: ${payloadSize} chars - sending as single request`);
+      const responseData = await sendToTanaApi(tanaPayload, result.apiKey);
+      
+      return {
+        success: true,
+        data: responseData
+      };
+    }
+    
+    // Large payload - needs chunking with hierarchical approach
+    console.log(`Large content detected (${payloadSize} chars). Using hierarchical chunking strategy.`);
+    
+    // First, create the main node with metadata only
+    const mainNodePayload = buildTanaPayload(
+      data, 
+      targetNodeId, 
+      result.supertagId, 
+      result.tanaFieldIds
+    );
+    
+    console.log('Sending main node with metadata...');
+    const mainNodeResponse = await sendToTanaApi(mainNodePayload, result.apiKey);
+    
+    // Extract the created node ID from the response
+    const createdNodeId = mainNodeResponse.children?.[0]?.nodeId;
+    if (!createdNodeId) {
+      throw new Error('Could not get node ID from main node creation response');
+    }
+    
+    console.log(`Main node created with ID: ${createdNodeId}`);
+    
+    // Rate limiting: wait 1 second after creating main node before sending content chunks
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Now chunk the hierarchical content and add as children to the main node
+    if (data.hierarchicalNodes && data.hierarchicalNodes.length > 0) {
+      const hierarchicalNodes = data.hierarchicalNodes[0].children.filter(node => 
+        node.children && Array.isArray(node.children) && node.children.length > 0
+      );
+      
+      const payloadChunks = chunkTanaPayload({
+        targetNodeId: createdNodeId, // Use the created node as target for content
+        nodes: [{
+          name: 'Content Container',
+          supertags: [],
+          children: hierarchicalNodes
+        }]
+      });
+      
+      console.log(`Chunked content into ${payloadChunks.length} parts`);
+      
+      // Send content chunks as children of the main node
+      const contentResponses = [];
+      for (let i = 0; i < payloadChunks.length; i++) {
+        const chunk = payloadChunks[i];
+        console.log(`Sending content chunk ${i + 1}/${payloadChunks.length} (${JSON.stringify(chunk).length} chars)`);
+        
+        try {
+          const chunkResponse = await sendToTanaApi(chunk, result.apiKey);
+          contentResponses.push(chunkResponse);
+          
+          // Rate limiting: wait 1.5 seconds between chunks to be extra safe
+          if (i < payloadChunks.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 1500));
+          }
+        } catch (error) {
+          console.error(`Error sending content chunk ${i + 1}:`, error);
+          
+          // If it's a rate limit error, provide a helpful message
+          if (error instanceof Error && error.message.includes('429')) {
+            throw new Error(`Rate limit exceeded while sending chunk ${i + 1}/${payloadChunks.length}. Please wait a moment and try again.`);
+          }
+          
+          throw new Error(`Failed to send content chunk ${i + 1}/${payloadChunks.length}: ${error}`);
+        }
+      }
+      
+      const responseData = {
+        mainNode: mainNodeResponse,
+        contentChunks: contentResponses.length,
+        responses: [mainNodeResponse, ...contentResponses]
+      };
+      
+      return {
+        success: true,
+        data: responseData
+      };
+    }
+    
+    // If no hierarchical content, just return the main node response
+    const responseData = {
+      mainNode: mainNodeResponse,
+      contentChunks: 0,
+      responses: [mainNodeResponse]
+    };
     
     return {
       success: true,
@@ -134,31 +234,57 @@ function validateConfig(config: Partial<TanaConfig>): asserts config is TanaConf
 }
 
 /**
- * Send payload to Tana API
+ * Send payload to Tana API with retry logic for rate limiting
  * @param payload - The payload to send
  * @param apiKey - The API key for authentication
+ * @param retryCount - Current retry attempt (for internal use)
  * @returns Promise resolving to the API response data
  */
-async function sendToTanaApi(payload: TanaPayload, apiKey: string): Promise<any> {
-  console.log('Sending request to Tana API...');
-  const response = await fetch('https://europe-west1-tagr-prod.cloudfunctions.net/addToNodeV2', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
-    body: JSON.stringify(payload)
-  });
+async function sendToTanaApi(payload: TanaPayload, apiKey: string, retryCount = 0): Promise<any> {
+  const maxRetries = 3;
+  const baseDelay = 2000; // 2 seconds base delay
   
-  console.log('API response status:', response.status);
+  console.log(`Sending request to Tana API (attempt ${retryCount + 1})...`);
   
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('API error response:', errorText);
-    throw new Error(`API error (${response.status}): ${errorText}`);
+  try {
+    const response = await fetch('https://europe-west1-tagr-prod.cloudfunctions.net/addToNodeV2', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(payload)
+    });
+    
+    console.log('API response status:', response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API error response:', errorText);
+      
+      // If it's a rate limit error and we haven't exceeded max retries, retry with exponential backoff
+      if (response.status === 429 && retryCount < maxRetries) {
+        const delay = baseDelay * Math.pow(2, retryCount); // Exponential backoff: 2s, 4s, 8s
+        console.log(`Rate limited. Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return sendToTanaApi(payload, apiKey, retryCount + 1);
+      }
+      
+      throw new Error(`API error (${response.status}): ${errorText}`);
+    }
+    
+    const responseData = await response.json();
+    console.log('API success response:', responseData);
+    return responseData;
+  } catch (error) {
+    // If it's a network error and we haven't exceeded max retries, retry
+    if (retryCount < maxRetries && !(error instanceof Error && error.message.includes('API error'))) {
+      const delay = baseDelay * Math.pow(2, retryCount);
+      console.log(`Network error. Retrying in ${delay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return sendToTanaApi(payload, apiKey, retryCount + 1);
+    }
+    
+    throw error;
   }
-  
-  const responseData = await response.json();
-  console.log('API success response:', responseData);
-  return responseData;
 }
