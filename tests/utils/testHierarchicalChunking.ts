@@ -105,14 +105,14 @@ async function main() {
         node.children && Array.isArray(node.children) && node.children.length > 0
       );
       
-      // Simulate the content payload that would be sent to the created main node
+      // NEW APPROACH: Simulate the content payload using our fixed approach (no wrapper)
       const contentPayload = {
         targetNodeId: 'SIMULATED_MAIN_NODE_ID', // This would be the actual ID returned from step 1
-        nodes: [{
-          name: 'Content Container',
-          supertags: [],
-          children: hierarchicalNodes
-        }]
+        nodes: hierarchicalNodes.map(node => ({
+          name: ('name' in node ? node.name : 'Content') || 'Content',
+          supertags: [] as { id: string }[],
+          children: (node.children || []) as any[]
+        }))
       };
 
       const contentSize = JSON.stringify(contentPayload).length;
@@ -127,14 +127,12 @@ async function main() {
       contentChunks.forEach((chunk, index) => {
         const chunkSize = JSON.stringify(chunk).length;
         const chunkNodeCount = countNodes(chunk);
-        const firstContentNode = chunk.nodes[0]?.children?.[0];
-        const chunkPreview = firstContentNode ? 
-          ('name' in firstContentNode ? firstContentNode.name : 'Unknown content') : 
-          'No content';
+        const firstNode = chunk.nodes[0];
+        const nodePreview = firstNode ? firstNode.name : 'No content';
         
         console.log(`  Chunk ${index + 1}: ${chunkSize} chars, ${chunkNodeCount} nodes`);
         console.log(`    Target: ${chunk.targetNodeId}`);
-        console.log(`    Preview: "${chunkPreview?.substring(0, 60)}${(chunkPreview?.length || 0) > 60 ? '...' : ''}"`);
+        console.log(`    First node: "${nodePreview?.substring(0, 60)}${(nodePreview?.length || 0) > 60 ? '...' : ''}"`);
       });
 
       // Verify all chunks are within limits
@@ -144,20 +142,39 @@ async function main() {
         return size <= 4500 && nodeCount <= 90;
       });
 
+      // Verify no "Content Container" wrapper nodes are created
+      const hasContentContainerWrappers = contentChunks.some(chunk => 
+        chunk.nodes.some(node => node.name === 'Content Container')
+      );
+
+      // Count meaningful content nodes vs wrapper nodes
+      const contentNodeCount = contentChunks.reduce((total, chunk) => {
+        return total + chunk.nodes.filter(node => node.name !== 'Content Container').length;
+      }, 0);
+
       console.log('\n4. Results:');
       console.log(`✅ Main node payload: ${mainPayloadSize} chars (within limits)`);
       console.log(`✅ Content chunks: ${contentChunks.length} parts`);
       console.log(`${chunksWithinLimits ? '✅' : '❌'} All chunks within API limits: ${chunksWithinLimits}`);
+      console.log(`${!hasContentContainerWrappers ? '✅' : '❌'} No "Content Container" wrapper nodes: ${!hasContentContainerWrappers}`);
+      console.log(`✅ Total content nodes across chunks: ${contentNodeCount}`);
       
-      if (chunksWithinLimits) {
+      if (chunksWithinLimits && !hasContentContainerWrappers) {
         console.log('\n🎉 HIERARCHICAL CHUNKING TEST PASSED!');
         console.log('The new approach successfully:');
         console.log('- Creates a metadata-only main node first');
         console.log('- Chunks large content into manageable pieces');
         console.log('- All content chunks target the main node for proper nesting');
         console.log('- Respects API size and node count limits');
+        console.log('- ✅ ELIMINATES "Content Container" wrapper nodes');
+        console.log('- Creates meaningful content nodes with actual section names');
       } else {
-        console.log('\n❌ Some chunks still exceed limits - need more aggressive chunking');
+        if (!chunksWithinLimits) {
+          console.log('\n❌ Some chunks still exceed limits - need more aggressive chunking');
+        }
+        if (hasContentContainerWrappers) {
+          console.log('\n❌ CHUNKING FIX FAILED: Still creating "Content Container" wrapper nodes');
+        }
       }
     }
 

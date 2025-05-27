@@ -8,7 +8,8 @@
     "dev": "vite",
     "clean": "rimraf ./dist/*",
     "package": "npm run build && npm run copy-assets",
-    "copy-assets": "copyfiles -f ./static/* ./dist/ && copyfiles -f ./static/images/* ./dist/images/"
+    "copy-assets": "copyfiles -f ./static/* ./dist/ && copyfiles -f ./static/images/* ./dist/images/",
+    "test:chunking": "npx tsx tests/runChunkingTests.ts"
   },
   "keywords": [
     "tana",
