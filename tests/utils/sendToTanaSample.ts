@@ -38,7 +38,11 @@ async function main() {
     );
     // Instead of overwriting payload.nodes, add extracted content as children of the main node
     if (payload.nodes.length > 0 && nodes.length > 0) {
-      payload.nodes[0].children.push(...nodes[0].children);
+      // Filter out flat text nodes - only include nodes that have children (hierarchical structure)
+      const hierarchicalNodes = nodes[0].children.filter(node => 
+        node.children && Array.isArray(node.children) && node.children.length > 0
+      );
+      payload.nodes[0].children.push(...hierarchicalNodes);
     }
 
     // Log the payload before sending

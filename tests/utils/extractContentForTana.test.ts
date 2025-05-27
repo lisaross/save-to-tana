@@ -4,6 +4,7 @@ import { JSDOM } from 'jsdom';
 import { extractContentForTana } from '../../src/utils/extractContentForTana';
 import { tanaConfig } from '../../src/utils/tanaConfig';
 import type { TanaNode } from '../../src/types/index';
+import type { TanaNodeChild, TanaNodeChildContent } from '../../src/types/index';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
@@ -41,27 +42,27 @@ describe('extractContentForTana', () => {
     expect(root.name).toBe('Extracted Content');
     expect(Array.isArray(root.children)).toBe(true);
 
-    // Should contain a heading, a paragraph, and a list
-    const types = root.children.map((c) => c.type);
-    expect(types).toContain('heading');
-    expect(types).toContain('paragraph');
-    expect(types).toContain('list');
+    // Should have hierarchical structure with headings as parent nodes
+    const hierarchicalNodes = root.children.filter(node => 
+      node.children && Array.isArray(node.children) && node.children.length > 0
+    );
+    expect(hierarchicalNodes.length).toBeGreaterThan(0);
 
-    // Check heading content
-    const heading = root.children.find((c) => c.type === 'heading');
-    expect(heading?.children[0].name).toBe('Test Header');
+    // Check heading content - should have "Test Header" as a parent node
+    const headingNode = root.children.find(child => 
+      'name' in child && child.name === 'Test Header'
+    );
+    expect(headingNode).toBeDefined();
+    expect(headingNode?.children).toBeDefined();
 
-    // Check paragraph and link
-    const paragraph = root.children.find((c) => c.type === 'paragraph');
-    expect(paragraph?.children[0].name).toContain('This is a');
+    // Should include paragraph content with link formatting
+    const allText = JSON.stringify(result);
+    expect(allText).toMatch(/This is a/);
+    expect(allText).toMatch(/\[link\]\(https:\/\/example\.com\/?\)/);
 
-    // Check list items
-    const list = root.children.find((c) => c.type === 'list');
-    expect(list).toBeDefined();
-    // Each list child is a TanaNodeChildContent
-    const listItemNames = list?.children.map((li) => li.name);
-    expect(listItemNames).toContain('First item');
-    expect(listItemNames).toContain('Second item');
+    // Should include list items
+    expect(allText).toMatch(/First item/);
+    expect(allText).toMatch(/Second item/);
   });
 });
 
@@ -107,4 +108,18 @@ describe('extractContentForTana - sample article', () => {
     expect(allText).toMatch(/Subsection/);
     expect(allText).toMatch(/Section Two/);
   });
-}); 
+});
+
+// Add type guard for TanaNodeChild
+function isTanaNodeChild(node: TanaNodeChild | TanaNodeChildContent): node is TanaNodeChild {
+  return (
+    typeof node === 'object' &&
+    node !== null &&
+    'type' in node &&
+    typeof (node as any).type === 'string' &&
+    'attributeId' in node &&
+    typeof (node as any).attributeId === 'string' &&
+    'children' in node &&
+    Array.isArray((node as any).children)
+  );
+} 

@@ -63,6 +63,7 @@ export interface TanaNodeChild {
 export interface TanaNodeChildContent {
   name?: string;
   dataType?: string;
+  children?: TanaNodeChildContent[];
 }
 
 // Message request structure
