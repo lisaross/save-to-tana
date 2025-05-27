@@ -3,7 +3,9 @@ import {
   SaveResponse, 
   TanaConfig, 
   SaveToTanaRequest,
-  TanaPayload
+  TanaPayload,
+  TanaNodeChild,
+  TanaNodeChildContent
 } from 'types';
 import { buildTanaPayload } from './tanaPayloadBuilder';
 import { chunkTanaPayload, getChunkingInfo } from './utils/payloadChunker';
@@ -124,14 +126,18 @@ async function saveToTana(data: SaveData): Promise<SaveResponse> {
         node.children && Array.isArray(node.children) && node.children.length > 0
       );
       
-      const payloadChunks = chunkTanaPayload({
-        targetNodeId: createdNodeId, // Use the created node as target for content
-        nodes: [{
-          name: 'Content Container',
-          supertags: [],
-          children: hierarchicalNodes
-        }]
-      });
+      // Create a single payload with just the content (no wrapper node) and chunk it
+      const contentPayload = {
+        targetNodeId: createdNodeId,
+        nodes: hierarchicalNodes.map(node => ({
+          name: ('name' in node ? node.name : 'Content') || 'Content',
+          supertags: [] as { id: string }[],
+          children: (node.children || []) as (TanaNodeChild | TanaNodeChildContent)[]
+        }))
+      };
+      
+      // Chunk the content payload
+      const payloadChunks = chunkTanaPayload(contentPayload);
       
       console.log(`Chunked content into ${payloadChunks.length} parts`);
       
