@@ -67,6 +67,16 @@ async function saveToTana(data: SaveData): Promise<SaveResponse> {
     );
     console.log('Formatted Tana payload:', tanaPayload);
     
+    // Add hierarchical content nodes if available
+    if (data.hierarchicalNodes && data.hierarchicalNodes.length > 0 && tanaPayload.nodes.length > 0) {
+      // Filter out flat text nodes - only include nodes that have children (hierarchical structure)
+      const hierarchicalNodes = data.hierarchicalNodes[0].children.filter(node => 
+        node.children && Array.isArray(node.children) && node.children.length > 0
+      );
+      tanaPayload.nodes[0].children.push(...hierarchicalNodes);
+      console.log('Added hierarchical content nodes:', hierarchicalNodes.length);
+    }
+    
     // Send data to Tana API
     const responseData = await sendToTanaApi(tanaPayload, result.apiKey);
     

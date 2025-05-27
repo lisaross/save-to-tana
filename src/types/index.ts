@@ -15,7 +15,7 @@ export interface TanaFieldIds {
   URL: string;
   Author: string;
   Description: string;
-  Content: string;
+  // Content: string; // COMMENTED OUT - using hierarchical content instead
 }
 
 // Data to be saved to Tana
@@ -24,7 +24,8 @@ export interface SaveData {
   title: string;
   author?: string;
   description?: string;
-  content: string;
+  // content: string; // COMMENTED OUT - using hierarchical content instead
+  hierarchicalNodes?: TanaNode[];
 }
 
 // Response from saveToTana function
