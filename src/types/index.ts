@@ -28,9 +28,9 @@ export interface SaveData {
 }
 
 // Response from saveToTana function
-export interface SaveResponse {
+export interface SaveResponse<T = unknown> {
   success: boolean;
-  data?: any;
+  data?: T;
   error?: string;
 }
 

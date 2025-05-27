@@ -1,4 +1,4 @@
-import { TanaConfig, TanaFieldIds } from '../types';
+import { TanaConfig, TanaFieldIds } from './types';
 
 /**
  * Options page interfaces
@@ -243,12 +243,16 @@ export class OptionsController {
         'Supertag ID: ' + result.supertagId + '\n' +
         Object.entries(result.fieldIds).map(([k, v]) => `${k} ID: ${v}`).join('\n');
       
-      // Store in chrome.storage
-      chrome.storage.sync.set({
-        supertagId: result.supertagId,
-        tanaFieldIds: result.fieldIds
-      }, () => {
-        this.showToast('Schema extracted and saved!');
+      // Store in chrome.storage, merging with existing apiKey and targetNodeId
+      chrome.storage.sync.get(['apiKey', 'targetNodeId'], (existing) => {
+        chrome.storage.sync.set({
+          apiKey: existing.apiKey || '',
+          targetNodeId: existing.targetNodeId || '',
+          supertagId: result.supertagId,
+          tanaFieldIds: result.fieldIds
+        }, () => {
+          this.showToast('Schema extracted and saved!');
+        });
       });
     } catch (e) {
       const error = e as Error;

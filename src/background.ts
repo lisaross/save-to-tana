@@ -85,11 +85,16 @@ async function saveToTana(data: SaveData): Promise<SaveResponse> {
  * @returns Promise resolving to TanaConfig
  */
 async function getStorageConfig(): Promise<TanaConfig> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     chrome.storage.sync.get(
       ['apiKey', 'targetNodeId', 'supertagId', 'tanaFieldIds'], 
       (result) => {
-        resolve(result as unknown as TanaConfig);
+        try {
+          validateConfig(result);
+          resolve(result as TanaConfig);
+        } catch (error) {
+          reject(error);
+        }
       }
     );
   });

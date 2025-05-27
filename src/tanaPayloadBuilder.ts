@@ -21,6 +21,20 @@ export function buildTanaPayload(
   supertagId: string, 
   fieldIds: TanaFieldIds
 ): TanaPayload {
+  // Input validation
+  if (!data) {
+    throw new Error('Missing required parameter: data');
+  }
+  if (!targetNodeId) {
+    throw new Error('Missing required parameter: targetNodeId');
+  }
+  if (!supertagId) {
+    throw new Error('Missing required parameter: supertagId');
+  }
+  if (!fieldIds) {
+    throw new Error('Missing required parameter: fieldIds');
+  }
+
   // Build the main node
   const mainNode: TanaNode = {
     name: sanitizeText(data.title || data.url),

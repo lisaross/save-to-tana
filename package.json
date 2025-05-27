@@ -1,14 +1,14 @@
 {
-  "name": "save-to-tana-ts",
+  "name": "save-to-tana",
   "version": "1.0.0",
-  "description": "Save web content to Tana - TypeScript version",
+  "description": "Save web content to Tana",
   "main": "index.js",
   "scripts": {
     "build": "vite build",
     "dev": "vite",
-    "clean": "rm -rf ./dist/*",
+    "clean": "rimraf ./dist/*",
     "package": "npm run build && npm run copy-assets",
-    "copy-assets": "cp -r ./static/* ./dist/"
+    "copy-assets": "copyfiles -f ./static/* ./dist/ && copyfiles -f ./static/images/* ./dist/images/"
   },
   "keywords": [
     "tana",
@@ -18,8 +18,10 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/chrome": "^0.0.260",
+    "@types/chrome": "^0.0.323",
     "@types/node": "^22.15.21",
+    "copyfiles": "^2.4.1",
+    "rimraf": "^6.0.1",
     "vite": "^6.3.5"
   }
 }
