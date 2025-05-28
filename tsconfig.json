@@ -16,6 +16,7 @@
     "skipLibCheck": true,
     "lib": ["dom", "dom.iterable", "esnext"],
     "resolveJsonModule": true,
+    // Type-only TS config; actual bundling is handled by Vite (see vite.build.config.ts)
     "baseUrl": "./src",
     "allowImportingTsExtensions": true,
     "noEmit": true
