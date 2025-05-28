@@ -26,6 +26,13 @@
     
     <button id="save-button">Save to Tana</button>
     
+    <div id="progress-container" class="progress-container" style="display: none;">
+      <div class="progress-bar">
+        <div id="progress-fill" class="progress-fill"></div>
+      </div>
+      <div id="progress-text" class="progress-text">Preparing content...</div>
+    </div>
+    
     <div id="status" class="status"></div>
     
     <div class="settings-link">
@@ -33,6 +40,6 @@
     </div>
   </div>
   
-  <script src="popup.js"></script>
+  <script type="module" src="popup.js"></script>
 </body>
 </html>

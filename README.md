@@ -21,6 +21,8 @@ A Chrome extension that saves web page content to Tana with structured fields an
 - Apply supertags and structured fields to saved content
 - Extract configuration directly from your Tana nodes
 - Right-click context menu for easy configuration
+- **Flexible node ID input**: accepts both direct node IDs and full Tana URLs
+- **Keyboard shortcuts**: quickly reload extension (Ctrl+Shift+E) and open popup (Ctrl+Shift+S)
 
 ## Installation Instructions
 
@@ -117,3 +119,18 @@ save-to-tana-ts/
 - `npm run build` - Build the extension for production
 - `npm run dev` - Build with watch mode for development
 - `npm run package` - Build and copy static assets to dist/
+- `npm run test:chunking` - Run chunking fix verification tests
+
+### Testing
+
+The extension includes comprehensive tests to verify the chunking fix that eliminates "Content Container" wrapper nodes:
+
+```bash
+npm run test:chunking
+```
+
+This test verifies:
+- ✅ No "Content Container" wrapper nodes are created when chunking large content
+- ✅ Content is properly organized with meaningful section names
+- ✅ All chunks comply with Tana API size and node limits
+- ✅ Content hierarchy is preserved during chunking

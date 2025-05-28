@@ -1,14 +1,17 @@
 /**
  * Content script interfaces
  */
+import { extractContentForTana } from './utils/extractContentForTana';
+import type { TanaNode } from './types/index';
+
 interface ExtractOptions {
   includeContent: boolean;
   includeTitle: boolean;
 }
 
 interface ExtractRequest {
-  action: 'extractContent';
-  options: ExtractOptions;
+  action: 'extractContent' | 'ping';
+  options?: ExtractOptions;
 }
 
 interface PageData {
@@ -17,6 +20,7 @@ interface PageData {
   author: string;
   description: string;
   content: string;
+  hierarchicalNodes?: TanaNode[];
   error?: boolean;
   message?: string;
 }
@@ -29,8 +33,14 @@ interface PageData {
 chrome.runtime.onMessage.addListener((
   request: ExtractRequest,
   sender: chrome.runtime.MessageSender,
-  sendResponse: (response: PageData) => void
+  sendResponse: (response: PageData | { pong: boolean }) => void
 ) => {
+  // Handle ping requests to check if content script is loaded
+  if (request.action === 'ping') {
+    sendResponse({ pong: true });
+    return true;
+  }
+  
   if (request.action === 'extractContent') {
     const options = request.options || { includeContent: true, includeTitle: true };
     
@@ -41,12 +51,16 @@ chrome.runtime.onMessage.addListener((
         title: document.title,
         author: extractAuthor(),
         description: extractDescription(),
-        content: ''
+        content: '' // Keeping this for now but not populating - using hierarchical content instead
       };
       
-      // Extract content if requested
+      // Extract hierarchical content structure if requested
       if (options.includeContent) {
-        pageData.content = extractMainContent();
+        try {
+          pageData.hierarchicalNodes = extractContentForTana(document);
+        } catch (error) {
+          console.warn('Could not extract hierarchical content:', error);
+        }
       }
       
       // If title is not requested, use URL as title
@@ -77,34 +91,6 @@ chrome.runtime.onMessage.addListener((
   // Must return true for asynchronous response
   return true;
 });
-
-/**
- * Extract the main content from the page
- * @returns The main content text
- */
-function extractMainContent(): string {
-  // Get main content - prioritize article content, then main, then body
-  const mainElement = document.querySelector('article') || 
-                     document.querySelector('main') || 
-                     document.querySelector('.main-content') || 
-                     document.body;
-  
-  if (!mainElement) {
-    return '';
-  }
-  
-  // Extract content
-  let content = mainElement.innerText;
-  
-  // Cap at 100000 characters to prevent excessive data transfer
-  const MAX_CONTENT_LENGTH = 100000;
-  if (content.length > MAX_CONTENT_LENGTH) {
-    content = content.substring(0, MAX_CONTENT_LENGTH) + 
-              '... (content truncated due to very large page)';
-  }
-  
-  return content;
-}
 
 /**
  * Extract author from meta tags and common page elements

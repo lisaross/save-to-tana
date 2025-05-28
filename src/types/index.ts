@@ -15,7 +15,7 @@ export interface TanaFieldIds {
   URL: string;
   Author: string;
   Description: string;
-  Content: string;
+  // Content: string; // COMMENTED OUT - using hierarchical content instead
 }
 
 // Data to be saved to Tana
@@ -24,7 +24,8 @@ export interface SaveData {
   title: string;
   author?: string;
   description?: string;
-  content: string;
+  // content: string; // COMMENTED OUT - using hierarchical content instead
+  hierarchicalNodes?: TanaNode[];
 }
 
 // Response from saveToTana function
@@ -44,7 +45,7 @@ export interface TanaPayload {
 export interface TanaNode {
   name: string;
   supertags: TanaSupertag[];
-  children: TanaNodeChild[];
+  children: (TanaNodeChild | TanaNodeChildContent)[];
 }
 
 // Tana supertag
@@ -63,10 +64,19 @@ export interface TanaNodeChild {
 export interface TanaNodeChildContent {
   name?: string;
   dataType?: string;
+  children?: TanaNodeChildContent[];
 }
 
 // Message request structure
 export interface SaveToTanaRequest {
   action: 'saveToTana';
   data: SaveData;
+}
+
+// Extension command types
+export type ExtensionCommand = 'reload' | 'open-popup';
+
+// Command handler interface
+export interface CommandHandler {
+  (command: ExtensionCommand): void | Promise<void>;
 }

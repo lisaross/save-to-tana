@@ -3,9 +3,15 @@ import {
   SaveResponse, 
   TanaConfig, 
   SaveToTanaRequest,
-  TanaPayload
-} from '../types';
+  TanaPayload,
+  TanaNodeChild,
+  TanaNodeChildContent,
+  ExtensionCommand
+} from 'types';
 import { buildTanaPayload } from './tanaPayloadBuilder';
+import { chunkTanaPayload, getChunkingInfo } from './utils/payloadChunker';
+import { validateTargetNodeId } from './utils/validators';
+import { sanitizeText } from './utils/textUtils';
 
 /**
  * Background script - handles API communication with Tana
@@ -15,6 +21,80 @@ import { buildTanaPayload } from './tanaPayloadBuilder';
 chrome.runtime.onInstalled.addListener(() => {
   console.log('Save to Tana extension installed');
 });
+
+// Handle keyboard shortcuts/commands
+chrome.commands.onCommand.addListener((command: string) => {
+  console.log('Command received:', command);
+  
+  const typedCommand = command as ExtensionCommand;
+  
+  switch (typedCommand) {
+    case 'reload':
+      handleReloadExtension();
+      break;
+    case 'open-popup':
+      handleOpenPopup();
+      break;
+    default:
+      console.log('Unknown command:', command);
+  }
+});
+
+/**
+ * Handle the reload extension command
+ */
+async function handleReloadExtension(): Promise<void> {
+  try {
+    console.log('Reloading extension...');
+    
+    // Close all extension pages (popup, options)
+    const extensionTabs = await chrome.tabs.query({
+      url: chrome.runtime.getURL('*')
+    });
+    
+    for (const tab of extensionTabs) {
+      if (tab.id) {
+        await chrome.tabs.remove(tab.id);
+      }
+    }
+    
+    // Reload the extension
+    chrome.runtime.reload();
+  } catch (error) {
+    console.error('Error reloading extension:', error);
+  }
+}
+
+/**
+ * Handle the open popup command
+ */
+async function handleOpenPopup(): Promise<void> {
+  try {
+    console.log('Opening popup...');
+    
+    // Get the current active tab
+    const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    
+    if (!activeTab?.id) {
+      console.error('No active tab found');
+      return;
+    }
+    
+    // Open the popup by triggering the action
+    chrome.action.openPopup();
+  } catch (error) {
+    console.error('Error opening popup:', error);
+    
+    // Fallback: try to open popup.html in a new tab
+    try {
+      await chrome.tabs.create({
+        url: chrome.runtime.getURL('popup.html')
+      });
+    } catch (fallbackError) {
+      console.error('Fallback popup opening failed:', fallbackError);
+    }
+  }
+}
 
 // Handle messages from popup and content scripts
 chrome.runtime.onMessage.addListener((
@@ -54,7 +134,7 @@ async function saveToTana(data: SaveData): Promise<SaveResponse> {
     
     console.log('Retrieved configuration from storage:', result);
     validateConfig(result);
-    
+
     const targetNodeId = result.targetNodeId;
     console.log('Using target node ID:', targetNodeId);
     
@@ -67,8 +147,121 @@ async function saveToTana(data: SaveData): Promise<SaveResponse> {
     );
     console.log('Formatted Tana payload:', tanaPayload);
     
-    // Send data to Tana API
-    const responseData = await sendToTanaApi(tanaPayload, result.apiKey);
+    // Add hierarchical content nodes if available
+    if (data.hierarchicalNodes && data.hierarchicalNodes.length > 0 && tanaPayload.nodes.length > 0) {
+      // Include all content nodes - both hierarchical and flat, but sanitized
+      const contentNodes = data.hierarchicalNodes[0].children || [];
+      const sanitizedContentNodes = contentNodes.map(sanitizeHierarchicalNode);
+      tanaPayload.nodes[0].children.push(...sanitizedContentNodes);
+      console.log('Added content nodes:', sanitizedContentNodes.length);
+    }
+    
+    // Check if we need to chunk the payload
+    const payloadSize = JSON.stringify(tanaPayload).length;
+    const needsChunking = payloadSize > 4500; // Conservative limit
+    
+    if (!needsChunking) {
+      // Small payload - send as-is
+      console.log(`Payload size: ${payloadSize} chars - sending as single request`);
+      const responseData = await sendToTanaApi(tanaPayload, result.apiKey);
+      
+      return {
+        success: true,
+        data: responseData
+      };
+    }
+    
+    // Large payload - needs chunking with hierarchical approach
+    console.log(`Large content detected (${payloadSize} chars). Using hierarchical chunking strategy.`);
+    
+    // First, create the main node with metadata only
+    const mainNodePayload = buildTanaPayload(
+      data, 
+      targetNodeId, 
+      result.supertagId, 
+      result.tanaFieldIds
+    );
+    
+    console.log('Sending main node with metadata...');
+    const mainNodeResponse = await sendToTanaApi(mainNodePayload, result.apiKey);
+    
+    // Extract the created node ID from the response
+    const createdNodeId = mainNodeResponse.children?.[0]?.nodeId;
+    if (!createdNodeId) {
+      throw new Error('Could not get node ID from main node creation response');
+    }
+    
+    console.log(`Main node created with ID: ${createdNodeId}`);
+    
+    // Rate limiting: wait 1 second after creating main node before sending content chunks
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Now chunk the hierarchical content and add as children to the main node
+    if (data.hierarchicalNodes && data.hierarchicalNodes.length > 0) {
+      const contentNodes = data.hierarchicalNodes[0].children || [];
+      
+      // Create a single payload with just the content (no wrapper node) and chunk it
+      const contentPayload: TanaPayload = {
+        targetNodeId: createdNodeId,
+        nodes: contentNodes.map((node: any) => {
+          const sanitizedNode = sanitizeHierarchicalNode(node);
+          return {
+            name: sanitizedNode.name || 'Content',
+            supertags: [] as { id: string }[],
+            children: sanitizedNode.children || []
+          };
+        })
+      };
+      
+      // Chunk the content payload
+      const payloadChunks = chunkTanaPayload(contentPayload);
+      
+      console.log(`Chunked content into ${payloadChunks.length} parts`);
+      
+      // Send content chunks as children of the main node
+      const contentResponses = [];
+      for (let i = 0; i < payloadChunks.length; i++) {
+        const chunk = payloadChunks[i];
+        console.log(`Sending content chunk ${i + 1}/${payloadChunks.length} (${JSON.stringify(chunk).length} chars)`);
+        
+        try {
+          const chunkResponse = await sendToTanaApi(chunk, result.apiKey);
+          contentResponses.push(chunkResponse);
+          
+          // Rate limiting: wait 1.5 seconds between chunks to be extra safe
+          if (i < payloadChunks.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 1500));
+          }
+        } catch (error) {
+          console.error(`Error sending content chunk ${i + 1}:`, error);
+          
+          // If it's a rate limit error, provide a helpful message
+          if (error instanceof Error && error.message.includes('429')) {
+            throw new Error(`Rate limit exceeded while sending chunk ${i + 1}/${payloadChunks.length}. Please wait a moment and try again.`);
+          }
+          
+          throw new Error(`Failed to send content chunk ${i + 1}/${payloadChunks.length}: ${error}`);
+        }
+      }
+      
+      const responseData = {
+        mainNode: mainNodeResponse,
+        contentChunks: contentResponses.length,
+        responses: [mainNodeResponse, ...contentResponses]
+      };
+      
+      return {
+        success: true,
+        data: responseData
+      };
+    }
+    
+    // If no hierarchical content, just return the main node response
+    const responseData = {
+      mainNode: mainNodeResponse,
+      contentChunks: 0,
+      responses: [mainNodeResponse]
+    };
     
     return {
       success: true,
@@ -91,7 +284,21 @@ async function getStorageConfig(): Promise<TanaConfig> {
       (result) => {
         try {
           validateConfig(result);
-          resolve(result as TanaConfig);
+          
+          // Validate and extract target node ID
+          const nodeIdValidation = validateTargetNodeId(result.targetNodeId);
+          if (!nodeIdValidation.success) {
+            reject(new Error(`Invalid target node ID: ${nodeIdValidation.error}`));
+            return;
+          }
+          
+          // Use the validated/extracted node ID
+          const configWithValidatedNodeId = {
+            ...result,
+            targetNodeId: nodeIdValidation.nodeId!
+          } as TanaConfig;
+          
+          resolve(configWithValidatedNodeId);
         } catch (error) {
           reject(error);
         }
@@ -124,31 +331,79 @@ function validateConfig(config: Partial<TanaConfig>): asserts config is TanaConf
 }
 
 /**
- * Send payload to Tana API
+ * Send payload to Tana API with retry logic for rate limiting
  * @param payload - The payload to send
  * @param apiKey - The API key for authentication
+ * @param retryCount - Current retry attempt (for internal use)
  * @returns Promise resolving to the API response data
  */
-async function sendToTanaApi(payload: TanaPayload, apiKey: string): Promise<any> {
-  console.log('Sending request to Tana API...');
-  const response = await fetch('https://europe-west1-tagr-prod.cloudfunctions.net/addToNodeV2', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
-    body: JSON.stringify(payload)
-  });
+async function sendToTanaApi(payload: TanaPayload, apiKey: string, retryCount = 0): Promise<any> {
+  const maxRetries = 3;
+  const baseDelay = 2000; // 2 seconds base delay
   
-  console.log('API response status:', response.status);
+  console.log(`Sending request to Tana API (attempt ${retryCount + 1})...`);
   
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('API error response:', errorText);
-    throw new Error(`API error (${response.status}): ${errorText}`);
+  try {
+    const response = await fetch('https://europe-west1-tagr-prod.cloudfunctions.net/addToNodeV2', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(payload)
+    });
+    
+    console.log('API response status:', response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API error response:', errorText);
+      
+      // If it's a rate limit error and we haven't exceeded max retries, retry with exponential backoff
+      if (response.status === 429 && retryCount < maxRetries) {
+        const delay = baseDelay * Math.pow(2, retryCount); // Exponential backoff: 2s, 4s, 8s
+        console.log(`Rate limited. Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return sendToTanaApi(payload, apiKey, retryCount + 1);
+      }
+      
+      throw new Error(`API error (${response.status}): ${errorText}`);
+    }
+    
+    const responseData = await response.json();
+    console.log('API success response:', responseData);
+    return responseData;
+  } catch (error) {
+    // If it's a network error and we haven't exceeded max retries, retry
+    if (retryCount < maxRetries && !(error instanceof Error && error.message.includes('API error'))) {
+      const delay = baseDelay * Math.pow(2, retryCount);
+      console.log(`Network error. Retrying in ${delay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return sendToTanaApi(payload, apiKey, retryCount + 1);
+    }
+    
+    throw error;
   }
-  
-  const responseData = await response.json();
-  console.log('API success response:', responseData);
-  return responseData;
+}
+
+/**
+ * Recursively sanitize node names in hierarchical content
+ * @param node - The node to sanitize
+ * @returns Sanitized node
+ */
+function sanitizeHierarchicalNode(node: any): TanaNodeChildContent {
+  const sanitizedNode: TanaNodeChildContent = {
+    name: sanitizeText(node.name || 'Content')
+  };
+
+  if (node.children && Array.isArray(node.children)) {
+    sanitizedNode.children = node.children.map(sanitizeHierarchicalNode);
+  }
+
+  // Preserve dataType if it exists (for URL nodes, etc.)
+  if (node.dataType) {
+    sanitizedNode.dataType = node.dataType;
+  }
+
+  return sanitizedNode;
 }

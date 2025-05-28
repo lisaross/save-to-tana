@@ -4,8 +4,14 @@
   "description": "Save web content to Tana",
   "main": "index.js",
   "scripts": {
-    "build": "vite build",
-    "dev": "vite",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "test:chunking": "npx tsx tests/runChunkingTests.ts",
+    "build": "npm run test && vite build --config vite.build.config.ts",
+    "build:only": "vite build --config vite.build.config.ts",
+    "dev": "vite --config vite.build.config.ts",
     "clean": "rimraf ./dist/*",
     "package": "npm run build && npm run copy-assets",
     "copy-assets": "copyfiles -f ./static/* ./dist/ && copyfiles -f ./static/images/* ./dist/images/"
@@ -19,9 +25,19 @@
   "license": "ISC",
   "devDependencies": {
     "@types/chrome": "^0.0.323",
+    "@types/jsdom": "^21.1.7",
     "@types/node": "^22.15.21",
+    "@types/node-fetch": "^2.6.12",
     "copyfiles": "^2.4.1",
+    "dotenv": "^16.5.0",
+    "jsdom": "^26.1.0",
     "rimraf": "^6.0.1",
-    "vite": "^6.3.5"
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5",
+    "vitest": "^3.1.4"
+  },
+  "dependencies": {
+    "@mozilla/readability": "^0.6.0",
+    "node-fetch": "^2.7.0"
   }
 }

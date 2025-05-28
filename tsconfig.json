@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "es2022",
     "module": "esnext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
     "rootDir": "./src",
     "outDir": "./dist",
     "sourceMap": true,
@@ -15,7 +15,11 @@
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true,
     "lib": ["dom", "dom.iterable", "esnext"],
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    // Type-only TS config; actual bundling is handled by Vite (see vite.build.config.ts)
+    "baseUrl": "./src",
+    "allowImportingTsExtensions": true,
+    "noEmit": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
