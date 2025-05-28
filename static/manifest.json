@@ -12,8 +12,8 @@
   "commands": {
     "reload": {
       "suggested_key": {
-        "default": "Ctrl+Shift+E",
-        "mac": "Command+Shift+E"
+        "default": "Ctrl+Shift+X",
+        "mac": "Command+Shift+X"
       },
       "description": "Reload the Save to Tana extension"
     },

@@ -11,6 +11,7 @@ import {
 import { buildTanaPayload } from './tanaPayloadBuilder';
 import { chunkTanaPayload, getChunkingInfo } from './utils/payloadChunker';
 import { validateTargetNodeId } from './utils/validators';
+import { sanitizeText } from './utils/textUtils';
 
 /**
  * Background script - handles API communication with Tana
@@ -148,10 +149,11 @@ async function saveToTana(data: SaveData): Promise<SaveResponse> {
     
     // Add hierarchical content nodes if available
     if (data.hierarchicalNodes && data.hierarchicalNodes.length > 0 && tanaPayload.nodes.length > 0) {
-      // Include all content nodes - both hierarchical and flat
+      // Include all content nodes - both hierarchical and flat, but sanitized
       const contentNodes = data.hierarchicalNodes[0].children || [];
-      tanaPayload.nodes[0].children.push(...contentNodes);
-      console.log('Added content nodes:', contentNodes.length);
+      const sanitizedContentNodes = contentNodes.map(sanitizeHierarchicalNode);
+      tanaPayload.nodes[0].children.push(...sanitizedContentNodes);
+      console.log('Added content nodes:', sanitizedContentNodes.length);
     }
     
     // Check if we need to chunk the payload
@@ -199,13 +201,16 @@ async function saveToTana(data: SaveData): Promise<SaveResponse> {
       const contentNodes = data.hierarchicalNodes[0].children || [];
       
       // Create a single payload with just the content (no wrapper node) and chunk it
-      const contentPayload = {
+      const contentPayload: TanaPayload = {
         targetNodeId: createdNodeId,
-        nodes: contentNodes.map((node: any) => ({
-          name: ('name' in node ? node.name : 'Content') || 'Content',
-          supertags: [] as { id: string }[],
-          children: (node.children || []) as (TanaNodeChild | TanaNodeChildContent)[]
-        }))
+        nodes: contentNodes.map((node: any) => {
+          const sanitizedNode = sanitizeHierarchicalNode(node);
+          return {
+            name: sanitizedNode.name || 'Content',
+            supertags: [] as { id: string }[],
+            children: sanitizedNode.children || []
+          };
+        })
       };
       
       // Chunk the content payload
@@ -379,4 +384,26 @@ async function sendToTanaApi(payload: TanaPayload, apiKey: string, retryCount = 
     
     throw error;
   }
+}
+
+/**
+ * Recursively sanitize node names in hierarchical content
+ * @param node - The node to sanitize
+ * @returns Sanitized node
+ */
+function sanitizeHierarchicalNode(node: any): TanaNodeChildContent {
+  const sanitizedNode: TanaNodeChildContent = {
+    name: sanitizeText(node.name || 'Content')
+  };
+
+  if (node.children && Array.isArray(node.children)) {
+    sanitizedNode.children = node.children.map(sanitizeHierarchicalNode);
+  }
+
+  // Preserve dataType if it exists (for URL nodes, etc.)
+  if (node.dataType) {
+    sanitizedNode.dataType = node.dataType;
+  }
+
+  return sanitizedNode;
 }
