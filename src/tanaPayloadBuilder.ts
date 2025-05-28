@@ -69,25 +69,6 @@ export function buildTanaPayload(
     });
   }
   
-  // Add Content field (chunked if needed) - COMMENTED OUT - using hierarchical content instead
-  // if (data.content && fieldIds.Content) {
-  //   const sanitizedContent = sanitizeText(data.content);
-  //   const maxContentLength = 4000;
-  //   let contentChunks: TanaNodeChildContent[] = [];
-  //   
-  //   if (sanitizedContent.length > maxContentLength) {
-  //     contentChunks = splitIntoChunks(sanitizedContent, maxContentLength)
-  //       .map(chunk => ({ name: chunk }));
-  //   } else {
-  //     contentChunks = [{ name: sanitizedContent }];
-  //   }
-  //   
-  //   mainNode.children.push({
-  //     type: 'field',
-  //     attributeId: fieldIds.Content,
-  //     children: contentChunks
-  //   });
-  // }
 
   return {
     targetNodeId,
