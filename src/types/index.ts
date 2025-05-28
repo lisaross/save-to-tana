@@ -72,3 +72,11 @@ export interface SaveToTanaRequest {
   action: 'saveToTana';
   data: SaveData;
 }
+
+// Extension command types
+export type ExtensionCommand = 'reload' | 'open-popup';
+
+// Command handler interface
+export interface CommandHandler {
+  (command: ExtensionCommand): void | Promise<void>;
+}

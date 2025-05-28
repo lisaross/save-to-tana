@@ -21,6 +21,8 @@ A Chrome extension that saves web page content to Tana with structured fields an
 - Apply supertags and structured fields to saved content
 - Extract configuration directly from your Tana nodes
 - Right-click context menu for easy configuration
+- **Flexible node ID input**: accepts both direct node IDs and full Tana URLs
+- **Keyboard shortcuts**: quickly reload extension (Ctrl+Shift+E) and open popup (Ctrl+Shift+S)
 
 ## Installation Instructions
 

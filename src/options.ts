@@ -1,4 +1,5 @@
 import { TanaConfig, TanaFieldIds } from './types';
+import { validateTargetNodeId } from './utils/validators';
 
 /**
  * Options page interfaces
@@ -32,6 +33,8 @@ export class OptionsController {
    * Initialize the options page controller
    */
   constructor() {
+    console.log('OptionsController constructor started');
+    
     // Get form elements
     this.apiKeyInput = document.getElementById('apiKey') as HTMLInputElement;
     this.targetNodeIdInput = document.getElementById('targetNodeId') as HTMLInputElement;
@@ -47,6 +50,21 @@ export class OptionsController {
     this.fieldIdContentInput = document.getElementById('fieldIdContent') as HTMLInputElement;
     this.toast = document.getElementById('toast') as HTMLDivElement;
     
+    // Debug log to check if elements were found
+    console.log('Extract schema button found:', !!this.extractSchemaButton);
+    console.log('Tana schema textarea found:', !!this.tanaSchemaInput);
+    console.log('All elements found:', {
+      apiKeyInput: !!this.apiKeyInput,
+      targetNodeIdInput: !!this.targetNodeIdInput,
+      supertagIdInput: !!this.supertagIdInput,
+      saveButton: !!this.saveButton,
+      tanaSchemaInput: !!this.tanaSchemaInput,
+      extractSchemaButton: !!this.extractSchemaButton,
+      extractedFieldsDiv: !!this.extractedFieldsDiv,
+      extractedFieldIdsPre: !!this.extractedFieldIdsPre,
+      toast: !!this.toast
+    });
+    
     // Create schema error div
     this.schemaErrorDiv = document.createElement('div');
     this.schemaErrorDiv.className = 'status error';
@@ -61,12 +79,17 @@ export class OptionsController {
    * Initialize the options page
    */
   private initializePage(): void {
+    console.log('Initializing options page...');
+    
     // Load saved configuration
     this.loadConfiguration();
     
     // Add event listeners
     this.saveButton.addEventListener('click', this.saveConfiguration.bind(this));
-    this.extractSchemaButton.addEventListener('click', this.extractSchemaFromTextarea.bind(this));
+    this.extractSchemaButton.addEventListener('click', () => {
+      console.log('Extract schema button clicked!');
+      this.extractSchemaFromTextarea();
+    });
     
     // Add input event listeners for validation
     this.apiKeyInput.addEventListener('input', this.validateForm.bind(this));
@@ -79,6 +102,8 @@ export class OptionsController {
     
     // Initialize example JSON toggle
     this.initializeExampleJsonToggle();
+    
+    console.log('Options page initialization complete');
   }
 
   /**
@@ -124,7 +149,7 @@ export class OptionsController {
           this.fieldIdUrlInput.value = result.tanaFieldIds.URL || '';
           this.fieldIdAuthorInput.value = result.tanaFieldIds.Author || '';
           this.fieldIdDescriptionInput.value = result.tanaFieldIds.Description || '';
-          this.fieldIdContentInput.value = result.tanaFieldIds.Content || '';
+          // Content field is commented out - using hierarchical content instead
         }
         
         this.validateForm();
@@ -136,24 +161,28 @@ export class OptionsController {
    * Save configuration to storage
    */
   private saveConfiguration(): void {
-    const apiKey = this.apiKeyInput.value.trim();
-    const targetNodeId = this.targetNodeIdInput.value.trim();
+    const rawTargetNodeId = this.targetNodeIdInput.value.trim();
     const supertagId = this.supertagIdInput.value.trim();
     const tanaFieldIds: TanaFieldIds = {
       URL: this.fieldIdUrlInput.value.trim(),
       Author: this.fieldIdAuthorInput.value.trim(),
       Description: this.fieldIdDescriptionInput.value.trim(),
-      Content: this.fieldIdContentInput.value.trim()
+      // Content field is commented out - using hierarchical content instead
     };
+    
+    // Validate and extract target node ID
+    const nodeIdValidation = validateTargetNodeId(rawTargetNodeId);
+    if (!nodeIdValidation.success) {
+      this.showToast(nodeIdValidation.error || 'Invalid target node ID', true);
+      return;
+    }
+    
+    const apiKey = this.apiKeyInput.value.trim();
+    const targetNodeId = nodeIdValidation.nodeId!; // We know it's valid from the check above
     
     // Validate required fields
     if (!apiKey) {
       this.showToast('API Token is required', true);
-      return;
-    }
-    
-    if (!targetNodeId) {
-      this.showToast('Target Node ID is required', true);
       return;
     }
     
@@ -162,8 +191,8 @@ export class OptionsController {
       return;
     }
     
-    if (!tanaFieldIds.URL || !tanaFieldIds.Author || !tanaFieldIds.Description || !tanaFieldIds.Content) {
-      this.showToast('All field IDs are required.', true);
+    if (!tanaFieldIds.URL || !tanaFieldIds.Author || !tanaFieldIds.Description) {
+      this.showToast('URL, Author, and Description field IDs are required.', true);
       return;
     }
     
@@ -202,25 +231,33 @@ export class OptionsController {
     this.toast.className = 'toast' + (isError ? ' error' : ' success') + ' show';
     
     setTimeout(() => {
-      this.toast.className = 'toast' + (isError ? ' error' : ' success');
-      this.toast.textContent = '';
-    }, 5000);
+      if (this.toast) {
+        this.toast.textContent = '';
+        this.toast.className = 'toast';
+      }
+    }, 3000);
   }
 
   /**
    * Extract schema from textarea
    */
   private extractSchemaFromTextarea(): void {
+    console.log('extractSchemaFromTextarea called');
+    
     this.schemaErrorDiv.style.display = 'none';
     this.schemaErrorDiv.textContent = '';
     
     const raw = this.tanaSchemaInput.value;
+    console.log('Raw textarea value:', raw ? `${raw.length} characters` : 'empty');
+    
     let schema;
     
     try {
       schema = JSON.parse(raw);
+      console.log('JSON parsed successfully:', schema);
     } catch (e) {
       const error = e as Error;
+      console.error('JSON parsing failed:', error);
       this.schemaErrorDiv.textContent = 'Could not parse JSON. Please paste the API payload as copied from Tana. Error: ' + error.message;
       this.schemaErrorDiv.style.display = 'block';
       this.extractedFieldsDiv.style.display = 'none';
@@ -235,7 +272,7 @@ export class OptionsController {
       this.fieldIdUrlInput.value = result.fieldIds.URL || '';
       this.fieldIdAuthorInput.value = result.fieldIds.Author || '';
       this.fieldIdDescriptionInput.value = result.fieldIds.Description || '';
-      this.fieldIdContentInput.value = result.fieldIds.Content || '';
+      // Content field is commented out - using hierarchical content instead
       
       // Show extracted info as a labeled list
       this.extractedFieldsDiv.style.display = 'block';
@@ -243,11 +280,26 @@ export class OptionsController {
         'Supertag ID: ' + result.supertagId + '\n' +
         Object.entries(result.fieldIds).map(([k, v]) => `${k} ID: ${v}`).join('\n');
       
-      // Store in chrome.storage, merging with existing apiKey and targetNodeId
+      // Store in chrome.storage, preserving current form values for apiKey and targetNodeId
+      const currentApiKey = this.apiKeyInput.value.trim();
+      const currentTargetNodeId = this.targetNodeIdInput.value.trim();
+      
+      // Validate current target node ID if provided
+      let validatedTargetNodeId = '';
+      if (currentTargetNodeId) {
+        const nodeIdValidation = validateTargetNodeId(currentTargetNodeId);
+        if (nodeIdValidation.success) {
+          validatedTargetNodeId = nodeIdValidation.nodeId!;
+        } else {
+          this.showToast(`Invalid target node ID: ${nodeIdValidation.error}`, true);
+          return;
+        }
+      }
+      
       chrome.storage.sync.get(['apiKey', 'targetNodeId'], (existing) => {
         chrome.storage.sync.set({
-          apiKey: existing.apiKey || '',
-          targetNodeId: existing.targetNodeId || '',
+          apiKey: currentApiKey || existing.apiKey || '',
+          targetNodeId: validatedTargetNodeId || existing.targetNodeId || '',
           supertagId: result.supertagId,
           tanaFieldIds: result.fieldIds
         }, () => {
@@ -289,7 +341,7 @@ export class OptionsController {
           } else if (fieldIds.Description === undefined) {
             fieldIds.Description = child.attributeId;
           } else {
-            fieldIds.Content = child.attributeId;
+            // Content field is commented out - using hierarchical content instead
           }
         }
       }

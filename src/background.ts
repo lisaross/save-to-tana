@@ -5,10 +5,12 @@ import {
   SaveToTanaRequest,
   TanaPayload,
   TanaNodeChild,
-  TanaNodeChildContent
+  TanaNodeChildContent,
+  ExtensionCommand
 } from 'types';
 import { buildTanaPayload } from './tanaPayloadBuilder';
 import { chunkTanaPayload, getChunkingInfo } from './utils/payloadChunker';
+import { validateTargetNodeId } from './utils/validators';
 
 /**
  * Background script - handles API communication with Tana
@@ -18,6 +20,80 @@ import { chunkTanaPayload, getChunkingInfo } from './utils/payloadChunker';
 chrome.runtime.onInstalled.addListener(() => {
   console.log('Save to Tana extension installed');
 });
+
+// Handle keyboard shortcuts/commands
+chrome.commands.onCommand.addListener((command: string) => {
+  console.log('Command received:', command);
+  
+  const typedCommand = command as ExtensionCommand;
+  
+  switch (typedCommand) {
+    case 'reload':
+      handleReloadExtension();
+      break;
+    case 'open-popup':
+      handleOpenPopup();
+      break;
+    default:
+      console.log('Unknown command:', command);
+  }
+});
+
+/**
+ * Handle the reload extension command
+ */
+async function handleReloadExtension(): Promise<void> {
+  try {
+    console.log('Reloading extension...');
+    
+    // Close all extension pages (popup, options)
+    const extensionTabs = await chrome.tabs.query({
+      url: chrome.runtime.getURL('*')
+    });
+    
+    for (const tab of extensionTabs) {
+      if (tab.id) {
+        await chrome.tabs.remove(tab.id);
+      }
+    }
+    
+    // Reload the extension
+    chrome.runtime.reload();
+  } catch (error) {
+    console.error('Error reloading extension:', error);
+  }
+}
+
+/**
+ * Handle the open popup command
+ */
+async function handleOpenPopup(): Promise<void> {
+  try {
+    console.log('Opening popup...');
+    
+    // Get the current active tab
+    const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    
+    if (!activeTab?.id) {
+      console.error('No active tab found');
+      return;
+    }
+    
+    // Open the popup by triggering the action
+    chrome.action.openPopup();
+  } catch (error) {
+    console.error('Error opening popup:', error);
+    
+    // Fallback: try to open popup.html in a new tab
+    try {
+      await chrome.tabs.create({
+        url: chrome.runtime.getURL('popup.html')
+      });
+    } catch (fallbackError) {
+      console.error('Fallback popup opening failed:', fallbackError);
+    }
+  }
+}
 
 // Handle messages from popup and content scripts
 chrome.runtime.onMessage.addListener((
@@ -57,7 +133,7 @@ async function saveToTana(data: SaveData): Promise<SaveResponse> {
     
     console.log('Retrieved configuration from storage:', result);
     validateConfig(result);
-    
+
     const targetNodeId = result.targetNodeId;
     console.log('Using target node ID:', targetNodeId);
     
@@ -203,7 +279,21 @@ async function getStorageConfig(): Promise<TanaConfig> {
       (result) => {
         try {
           validateConfig(result);
-          resolve(result as TanaConfig);
+          
+          // Validate and extract target node ID
+          const nodeIdValidation = validateTargetNodeId(result.targetNodeId);
+          if (!nodeIdValidation.success) {
+            reject(new Error(`Invalid target node ID: ${nodeIdValidation.error}`));
+            return;
+          }
+          
+          // Use the validated/extracted node ID
+          const configWithValidatedNodeId = {
+            ...result,
+            targetNodeId: nodeIdValidation.nodeId!
+          } as TanaConfig;
+          
+          resolve(configWithValidatedNodeId);
         } catch (error) {
           reject(error);
         }
