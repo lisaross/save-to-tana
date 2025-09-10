@@ -442,9 +442,9 @@ async function handleSaveWithCustomTitle(tabId: number, customNotes: string): Pr
     // Extract content first
     const pageData = await extractPageContent(tabId);
     if (pageData) {
-      // Keep original title, but prepend custom notes to content
+      // Add notes as separate field, keep content clean
       if (customNotes.trim()) {
-        pageData.content = customNotes + '\n\n' + pageData.content;
+        pageData.notes = customNotes;
       }
       
       const result = await saveToTana(pageData);

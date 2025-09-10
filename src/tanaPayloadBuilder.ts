@@ -69,6 +69,13 @@ export function buildTanaPayload(
     });
   }
   
+  // Add user notes as a direct child node (appears in body)
+  if (data.notes && data.notes.trim()) {
+    mainNode.children.push({
+      name: sanitizeText(data.notes)
+    });
+  }
+  
   // Add Content field (chunked if needed)
   if (data.content && fieldIds.Content) {
     const sanitizedContent = sanitizeText(data.content);

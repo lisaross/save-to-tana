@@ -25,6 +25,7 @@ export interface SaveData {
   author?: string;
   description?: string;
   content: string;
+  notes?: string;
 }
 
 // Response from saveToTana function
@@ -52,11 +53,12 @@ export interface TanaSupertag {
   id: string;
 }
 
-// Tana node child (field)
+// Tana node child (field or regular node)
 export interface TanaNodeChild {
-  type: string;
-  attributeId: string;
-  children: TanaNodeChildContent[];
+  type?: string;
+  attributeId?: string;
+  children?: TanaNodeChildContent[];
+  name?: string; // For regular child nodes
 }
 
 // Tana node child content
