@@ -6,8 +6,29 @@
   "permissions": [
     "activeTab",
     "storage",
-    "contextMenus"
+    "contextMenus",
+    "scripting",
+    "notifications"
   ],
+  "commands": {
+    "quick-save": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+S",
+        "mac": "Command+Shift+S"
+      },
+      "description": "Quick save current page to Tana"
+    },
+    "save-with-notes": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+D",
+        "mac": "Command+Shift+D"
+      },
+      "description": "Save current page to Tana with notes dialog"
+    }
+  },
+  "omnibox": {
+    "keyword": "tana"
+  },
   "action": {
     "default_popup": "popup.html",
     "default_icon": {

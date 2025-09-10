@@ -202,8 +202,10 @@ export class OptionsController {
     this.toast.className = 'toast' + (isError ? ' error' : ' success') + ' show';
     
     setTimeout(() => {
-      this.toast.className = 'toast' + (isError ? ' error' : ' success');
-      this.toast.textContent = '';
+      if (this.toast) {
+        this.toast.className = 'toast' + (isError ? ' error' : ' success');
+        this.toast.textContent = '';
+      }
     }, 5000);
   }
 

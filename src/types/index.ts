@@ -65,8 +65,50 @@ export interface TanaNodeChildContent {
   dataType?: string;
 }
 
-// Message request structure
-export interface SaveToTanaRequest {
+// Message request structure - Base interface
+export interface BaseRequest {
+  action: string;
+}
+
+// Specific request types
+export interface SaveToTanaRequest extends BaseRequest {
   action: 'saveToTana';
   data: SaveData;
 }
+
+export interface ExtractContentRequest extends BaseRequest {
+  action: 'extractContent';
+  options?: {
+    includeContent?: boolean;
+    includeTitle?: boolean;
+  };
+}
+
+export interface ShowOverlayRequest extends BaseRequest {
+  action: 'showOverlay';
+  data: SaveData;
+}
+
+export interface InjectOverlayRequest extends BaseRequest {
+  action: 'injectOverlay';
+  tabId: number;
+}
+
+export interface QuickSaveRequest extends BaseRequest {
+  action: 'quickSave';
+  tabId: number;
+}
+
+export interface SaveWithNotesRequest extends BaseRequest {
+  action: 'saveWithNotes';
+  tabId: number;
+}
+
+// Union type for all possible requests
+export type ExtensionRequest = 
+  | SaveToTanaRequest 
+  | ExtractContentRequest 
+  | ShowOverlayRequest 
+  | InjectOverlayRequest
+  | QuickSaveRequest
+  | SaveWithNotesRequest;
