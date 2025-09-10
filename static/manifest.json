@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Save to Tana",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Save web page content to Tana with structured fields and supertags.",
   "permissions": [
     "activeTab",
