@@ -256,10 +256,8 @@ export class OptionsController {
 
       // Show extracted info as a labeled list
       this.extractedFieldsDiv.style.display = 'block';
-      this.extractedFieldIdsPre.innerHTML =
-        'Supertag ID: ' +
-        result.supertagId +
-        '\n' +
+      this.extractedFieldIdsPre.textContent =
+        `Supertag ID: ${result.supertagId}\n` +
         Object.entries(result.fieldIds)
           .map(([k, v]) => `${k} ID: ${v}`)
           .join('\n');

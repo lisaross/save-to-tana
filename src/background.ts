@@ -48,7 +48,9 @@ async function saveToTana(data: SaveData): Promise<SaveResponse> {
     // Get API key, target node ID, and schema info from storage
     const result = await getStorageConfig();
 
-    console.log('Retrieved configuration from storage:', result);
+    // Redact sensitive information before logging
+    const redactedConfig = { ...result, apiKey: '***' };
+    console.log('Retrieved configuration from storage:', redactedConfig);
     validateConfig(result);
 
     const targetNodeId = result.targetNodeId;

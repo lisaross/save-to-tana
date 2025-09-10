@@ -88,7 +88,7 @@ export class PopupController {
     // Get the current tab
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const currentTab = tabs[0];
-      if (!currentTab.id) {
+      if (!currentTab || typeof currentTab.id !== 'number') {
         this.handleError('Cannot access the current tab.');
         return;
       }
@@ -145,6 +145,11 @@ export class PopupController {
     };
 
     chrome.runtime.sendMessage(request, (result) => {
+      if (chrome.runtime.lastError) {
+        this.handleError(`Error sending request: ${chrome.runtime.lastError.message}`);
+        return;
+      }
+      
       this.saveButton.disabled = false;
       this.saveButton.textContent = 'Save to Tana';
 
