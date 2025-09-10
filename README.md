@@ -2,7 +2,7 @@
 
 A Chrome extension that saves web page content directly to your Tana workspace with just one click. Extract structured information from articles, blog posts, and documentation automatically.
 
-![Save to Tana Demo](images/save-to-tana-hero.png)
+![Save to Tana Demo](assets/extensionicon.png)
 *Save any web page to your Tana workspace with structured fields*
 
 ## 📋 What You'll Need Before Starting
@@ -17,7 +17,7 @@ A Chrome extension that saves web page content directly to your Tana workspace w
 1. In your Tana workspace, create a new supertag called `#save-to-tana`
 2. Add these **4 required fields** to your supertag (exact names required):
 
-![Tana Supertag Setup](images/tana-supertag-fields.png)
+![Tana Supertag Setup](assets/supertag.png)
 *Required fields for the #save-to-tana supertag*
 
 **Required Fields:**
@@ -34,7 +34,7 @@ A Chrome extension that saves web page content directly to your Tana workspace w
 3. Search for and select **"Show API Schema"**
 4. Click the **"Copy payload"** button
 
-![Tana API Schema](images/tana-api-schema.png)
+![Tana API Schema](assets/api-schema.png)
 *Tana's Show API Schema feature with Copy payload button*
 
 Keep this copied - you'll need it in Step 3!
@@ -49,14 +49,14 @@ Keep this copied - you'll need it in Step 3!
 ### Install in Chrome
 1. Open Chrome and go to `chrome://extensions/`
 
-![Chrome Extensions Page](images/chrome-extensions-page.png)
+![Chrome Extensions Page](assets/extensions.png)
 *Chrome extensions page with Developer mode toggle*
 
 2. Enable **"Developer mode"** using the toggle in the top right
 3. Click **"Load unpacked"** and select the unzipped `dist` folder
 4. The extension icon should appear in your Chrome toolbar
 
-![Extension Installed](images/extension-toolbar.png)
+![Extension Installed](assets/extensionicon.png)
 *Save to Tana extension icon in Chrome toolbar*
 
 > **✅ Success:** You should see the Save to Tana icon in your browser toolbar.
@@ -73,7 +73,7 @@ Keep this copied - you'll need it in Step 3!
 ### Configure Extension Settings
 1. **Right-click** the extension icon and select **"Options"**
 
-![Extension Options](images/extension-options.png)
+![Extension Options](assets/options.png)
 *Save to Tana extension options page*
 
 2. **Paste** the JSON schema from Step 1 in the "Paste Schema & Extract" section
@@ -85,7 +85,7 @@ Keep this copied - you'll need it in Step 3!
    - The ID is the part after `nodeid=` in the URL
 6. **Click** "Save Options"
 
-![Configuration Complete](images/configuration-complete.png)
+![Configuration Complete](assets/options.png)
 *Successfully configured extension showing all required fields*
 
 > **🎉 Setup Complete!** You're now ready to save web pages to Tana.
@@ -97,7 +97,6 @@ Keep this copied - you'll need it in Step 3!
 1. **Navigate** to any web page you want to save
 2. **Click** the Save to Tana extension icon in your toolbar
 
-![Extension Popup](images/extension-popup.png)
 *Save to Tana popup with content options*
 
 3. **Choose** what to include:
@@ -105,25 +104,40 @@ Keep this copied - you'll need it in Step 3!
    - ✅ **Include page title** - Use page title (unchecked = uses URL as title)
 4. **Click** "Save to Tana"
 
-![Save Success](images/save-success.png)
 *Success message after saving content*
 
 ### ⚡ Method 2: Keyboard Shortcuts (Fastest)
+
+![Keyboard Shortcuts](assets/keyboardshortcuts.png)
+*Available keyboard shortcuts for quick saving*
+
 - **Quick Save**: `Alt+Shift+T` (Windows/Linux) or `Cmd+Shift+S` (Mac)
 - **Save with Notes**: `Alt+Shift+N` (Windows/Linux) or `Cmd+Shift+N` (Mac)
 
 ### 🔍 Method 3: Address Bar (Omnibox)
+
+![Omnibox Usage](assets/omnibar.png)
+*Type 'tana' in the address bar to quickly save pages*
+
 1. Click in the browser address bar
 2. Type `tana` followed by a space
 3. Enter optional notes or custom title
 4. Press Enter to save
 
 ### 📋 Method 4: Right-Click Menus
+
+![Right-Click Menu](assets/rightclick.png)
+*Right-click context menu options for saving content*
+
 - **Right-click on any webpage**: Choose "Save page to Tana"
 - **Right-click on selected text**: Choose "Save selection to Tana"
 - **Add notes**: Choose "Save with notes" options for custom annotations
 
 ### 💬 Method 5: Quick Capture Overlay
+
+![Add Notes Dialog](assets/addnotesdialog.png)
+*Quick capture overlay for adding notes before saving*
+
 When using "save with notes" options, an overlay appears where you can:
 - Preview what's being saved (title and URL)
 - Add personal notes before saving
@@ -133,7 +147,7 @@ When using "save with notes" options, an overlay appears where you can:
 
 The extension creates a new node in your target location with:
 
-![Saved Content Result](images/saved-content-tana.png)
+![Saved Content Result](assets/afterimport-withnotes.png)
 *Example of saved content in Tana with all fields populated*
 
 - **Node title** - Page title (or URL if title unchecked)
