@@ -722,16 +722,10 @@ function handleSaveFromOverlay(): void {
   const notesInput = overlayElement.querySelector('#tana-notes-input') as HTMLTextAreaElement;
   const notes = notesInput ? notesInput.value.trim() : '';
 
-  // Combine notes with content if provided
-  let finalContent = currentPageData.content;
-  if (notes) {
-    finalContent = notes + '\n\n' + finalContent;
-  }
-
+  // Keep content separate from notes - notes will be added as direct child node
   const saveData = {
     ...currentPageData,
-    content: finalContent,
-    notes
+    notes: notes || undefined  // Only include notes if they exist
   };
 
   // Disable save button
