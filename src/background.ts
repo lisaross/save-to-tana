@@ -173,7 +173,7 @@ async function saveToTana(data: SaveData): Promise<SaveResponse> {
     const result = await getStorageConfig();
 
     // Redact sensitive information before logging
-    const redactedConfig = { ...result, apiKey: '***' };
+    const redactedConfig = { ...result, apiKey: result.apiKey ? '***' : undefined };
     console.log('Retrieved configuration from storage:', redactedConfig);
     validateConfig(result);
 
@@ -209,13 +209,23 @@ async function saveToTana(data: SaveData): Promise<SaveResponse> {
  */
 async function getStorageConfig(): Promise<TanaConfig> {
   return new Promise((resolve, reject) => {
-    chrome.storage.sync.get(['apiKey', 'targetNodeId', 'supertagId', 'tanaFieldIds'], (result) => {
-      try {
-        validateConfig(result);
-        resolve(result as TanaConfig);
-      } catch (error) {
-        reject(error);
-      }
+    // First check local storage for API key
+    chrome.storage.local.get(['apiKey'], (localResult) => {
+      // Then get other config from sync storage
+      chrome.storage.sync.get(['apiKey', 'targetNodeId', 'supertagId', 'tanaFieldIds'], (syncResult) => {
+        try {
+          const result = {
+            ...syncResult,
+            // Prefer local API key over sync API key
+            apiKey: localResult.apiKey || syncResult.apiKey
+          };
+          
+          validateConfig(result);
+          resolve(result as TanaConfig);
+        } catch (error) {
+          reject(error);
+        }
+      });
     });
   });
 }
@@ -259,26 +269,45 @@ function validateConfig(config: Partial<TanaConfig>): asserts config is TanaConf
  */
 async function sendToTanaApi(payload: TanaPayload, apiKey: string): Promise<any> {
   console.log('Sending request to Tana API...');
-  const response = await fetch('https://europe-west1-tagr-prod.cloudfunctions.net/addToNodeV2', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify(payload),
-  });
+  
+  // Create abort controller for timeout handling
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, 30000); // 30 second timeout
 
-  console.log('API response status:', response.status);
+  try {
+    const response = await fetch('https://europe-west1-tagr-prod.cloudfunctions.net/addToNodeV2', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('API error response:', errorText);
-    throw new Error(`API error (${response.status}): ${errorText}`);
+    clearTimeout(timeoutId);
+    console.log('API response status:', response.status);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API error response:', errorText);
+      throw new Error(`API error (${response.status}): ${errorText}`);
+    }
+
+    const responseData = await response.json();
+    console.log('API success response:', responseData);
+    return responseData;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('API request timed out after 30 seconds');
+    }
+    
+    throw error;
   }
-
-  const responseData = await response.json();
-  console.log('API success response:', responseData);
-  return responseData;
 }
 
 // ===== Event Handler Functions =====

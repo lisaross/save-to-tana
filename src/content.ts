@@ -747,7 +747,7 @@ function handleSaveFromOverlay(): void {
     saveButton.textContent = 'Saving...';
   }
 
-  // Send save request
+  // Send save request with notes
   chrome.runtime.sendMessage({
     action: 'saveToTana',
     data: saveData

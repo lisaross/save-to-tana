@@ -57,15 +57,18 @@ export class PopupController {
    * Check if the extension is configured
    */
   private checkConfiguration(): void {
-    chrome.storage.sync.get(
-      ['apiKey', 'supertagId', 'targetNodeId'], 
-      (result) => {
-        if (!result.apiKey || !result.supertagId || !result.targetNodeId) {
+    // Check local storage for API key first
+    chrome.storage.local.get(['apiKey'], (localResult) => {
+      // Then check sync storage for other config
+      chrome.storage.sync.get(['apiKey', 'supertagId', 'targetNodeId'], (syncResult) => {
+        const apiKey = localResult.apiKey || syncResult.apiKey;
+        
+        if (!apiKey || !syncResult.supertagId || !syncResult.targetNodeId) {
           this.saveButton.disabled = true;
           this.notConfiguredDiv.style.display = 'block';
         }
-      }
-    );
+      });
+    });
   }
 
   /**
@@ -91,7 +94,7 @@ export class PopupController {
     // Get the current tab
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const currentTab = tabs[0];
-      if (!currentTab.id) {
+      if (!currentTab || !currentTab.id) {
         this.handleError('Cannot access the current tab.');
         return;
       }
@@ -148,6 +151,11 @@ export class PopupController {
     chrome.runtime.sendMessage(request, (result) => {
       this.saveButton.disabled = false;
       this.saveButton.textContent = 'Save to Tana';
+      
+      if (chrome.runtime.lastError) {
+        this.handleError('Extension communication error: ' + chrome.runtime.lastError.message);
+        return;
+      }
       
       if (!result) {
         this.handleError('No response from the extension. Please try again.');

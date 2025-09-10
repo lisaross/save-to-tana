@@ -52,6 +52,34 @@ declare global {
   };
 }
 
+// Mock jest functions for environments without jest (MUST BE FIRST)
+function createMockFunction() {
+  const calls: any[][] = [];
+  const fn = (...args: any[]) => {
+    calls.push(args);
+    return fn._mockReturnValue;
+  };
+  fn.mockImplementation = (impl: Function) => {
+    fn._impl = impl;
+    return fn;
+  };
+  fn.mockResolvedValue = (value: any) => {
+    fn._mockReturnValue = Promise.resolve(value);
+    return fn;
+  };
+  fn.mockReturnValue = (value: any) => {
+    fn._mockReturnValue = value;
+    return fn;
+  };
+  fn.calls = calls;
+  fn._mockReturnValue = undefined;
+  return fn;
+}
+
+const jest = {
+  fn: createMockFunction,
+};
+
 // Mock Chrome API implementations
 const mockChrome = {
   runtime: {
@@ -104,34 +132,6 @@ const mockConsole = {
   log: jest.fn(),
   error: jest.fn(),
   warn: jest.fn(),
-};
-
-// Mock jest functions for environments without jest
-function createMockFunction() {
-  const calls: any[][] = [];
-  const fn = (...args: any[]) => {
-    calls.push(args);
-    return fn._mockReturnValue;
-  };
-  fn.mockImplementation = (impl: Function) => {
-    fn._impl = impl;
-    return fn;
-  };
-  fn.mockResolvedValue = (value: any) => {
-    fn._mockReturnValue = Promise.resolve(value);
-    return fn;
-  };
-  fn.mockReturnValue = (value: any) => {
-    fn._mockReturnValue = value;
-    return fn;
-  };
-  fn.calls = calls;
-  fn._mockReturnValue = undefined;
-  return fn;
-}
-
-const jest = {
-  fn: createMockFunction,
 };
 
 // Apply mocks
@@ -544,15 +544,24 @@ integrationTest.test('Tab messaging handles communication errors', () => {
 // Run all integration tests
 console.log('🚀 Running Chrome Extension Integration Tests\n');
 
-// Execute tests
-Promise.all([
-  // Run tests that return promises
-]).then(() => {
-  integrationTest.printSummary();
-}).catch((error) => {
-  console.error('Integration test execution failed:', error);
-  integrationTest.printSummary();
-});
+// Execute all async tests and wait for completion
+(async () => {
+  try {
+    // All test calls that return promises should be awaited here
+    await Promise.all([
+      // These tests are already synchronous and handled by the test runner
+      // Just ensure we wait for any async operations to complete
+    ]);
+    
+    // Small delay to ensure all async tests complete
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    integrationTest.printSummary();
+  } catch (error) {
+    console.error('Integration test execution failed:', error);
+    integrationTest.printSummary();
+  }
+})();
 
 // Export for potential external use
 if (typeof module !== 'undefined' && module.exports) {

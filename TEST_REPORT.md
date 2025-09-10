@@ -239,7 +239,7 @@ dist/
 
 ### Data Handling
 - ✅ No sensitive data stored in extension
-- ✅ API keys stored in Chrome's secure storage
+- ✅ API keys stored in Chrome storage (chrome.storage.local/sync) - Consider using more secure alternatives for sensitive tokens
 - ✅ Content extraction respects page boundaries
 - ✅ No external network requests except to Tana API
 

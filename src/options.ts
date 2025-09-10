@@ -103,10 +103,28 @@ export class OptionsController {
    * Load saved configuration from storage
    */
   private loadConfiguration(): void {
-    chrome.storage.sync.get(
-      ['apiKey', 'supertagId', 'targetNodeId', 'tanaFieldIds'], 
-      (result: Partial<TanaConfig>) => {
-        console.log('Loaded configuration:', result);
+    // Load API key from local storage (more secure)
+    chrome.storage.local.get(['apiKey'], (localResult) => {
+      // Load other config from sync storage
+      chrome.storage.sync.get(['apiKey', 'supertagId', 'targetNodeId', 'tanaFieldIds'], (syncResult) => {
+        const result: Partial<TanaConfig> = {
+          ...syncResult,
+          // Prefer local API key over sync API key
+          apiKey: localResult.apiKey || syncResult.apiKey
+        };
+
+        // Migrate API key from sync to local if needed
+        if (syncResult.apiKey && !localResult.apiKey) {
+          chrome.storage.local.set({ apiKey: syncResult.apiKey }, () => {
+            // Remove API key from sync storage after migration
+            chrome.storage.sync.remove(['apiKey']);
+            console.log('Migrated API key to local storage');
+          });
+        }
+
+        // Redact sensitive information before logging
+        const redactedResult = { ...result, apiKey: result.apiKey ? '***' : undefined };
+        console.log('Loaded configuration:', redactedResult);
         
         if (result.apiKey) {
           this.apiKeyInput.value = result.apiKey;
@@ -128,8 +146,8 @@ export class OptionsController {
         }
         
         this.validateForm();
-      }
-    );
+      });
+    });
   }
 
   /**
@@ -167,14 +185,16 @@ export class OptionsController {
       return;
     }
     
-    // Save configuration to storage
-    chrome.storage.sync.set({
-      apiKey,
-      targetNodeId,
-      supertagId,
-      tanaFieldIds
-    }, () => {
-      this.showToast('Configuration saved successfully!');
+    // Save API key to local storage (more secure)
+    chrome.storage.local.set({ apiKey }, () => {
+      // Save other configuration to sync storage
+      chrome.storage.sync.set({
+        targetNodeId,
+        supertagId,
+        tanaFieldIds
+      }, () => {
+        this.showToast('Configuration saved successfully!');
+      });
     });
   }
 
@@ -241,14 +261,13 @@ export class OptionsController {
       
       // Show extracted info as a labeled list
       this.extractedFieldsDiv.style.display = 'block';
-      this.extractedFieldIdsPre.innerHTML =
+      this.extractedFieldIdsPre.textContent =
         'Supertag ID: ' + result.supertagId + '\n' +
         Object.entries(result.fieldIds).map(([k, v]) => `${k} ID: ${v}`).join('\n');
       
-      // Store in chrome.storage, merging with existing apiKey and targetNodeId
-      chrome.storage.sync.get(['apiKey', 'targetNodeId'], (existing) => {
+      // Store in chrome.storage, merging with existing targetNodeId (but not apiKey in sync)
+      chrome.storage.sync.get(['targetNodeId'], (existing) => {
         chrome.storage.sync.set({
-          apiKey: existing.apiKey || '',
           targetNodeId: existing.targetNodeId || '',
           supertagId: result.supertagId,
           tanaFieldIds: result.fieldIds
