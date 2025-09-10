@@ -21,7 +21,7 @@
     "save-with-notes": {
       "suggested_key": {
         "default": "Alt+Shift+N",
-        "mac": "MacCtrl+Shift+N"
+        "mac": "Command+Shift+N"
       },
       "description": "Save current page to Tana with notes dialog"
     }

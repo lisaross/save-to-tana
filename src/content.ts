@@ -307,9 +307,21 @@ function createOverlayStructure(container: HTMLElement, pageData: PageData): voi
   closeButton.type = 'button';
   closeButton.className = 'tana-overlay-close';
   closeButton.id = 'tana-close-overlay';
-  closeButton.innerHTML = `<svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-    <path d="M13.5 4.5l-9 9M4.5 4.5l9 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-  </svg>`;
+  // Create SVG element safely using DOM methods
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('width', '18');
+  svg.setAttribute('height', '18');
+  svg.setAttribute('viewBox', '0 0 18 18');
+  svg.setAttribute('fill', 'none');
+  
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', 'M13.5 4.5l-9 9M4.5 4.5l9 9');
+  path.setAttribute('stroke', 'currentColor');
+  path.setAttribute('stroke-width', '2');
+  path.setAttribute('stroke-linecap', 'round');
+  
+  svg.appendChild(path);
+  closeButton.appendChild(svg);
   
   header.appendChild(title);
   header.appendChild(closeButton);
