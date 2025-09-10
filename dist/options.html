@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Save to Tana Options</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="notice-bar">
+    Not an official Tana product. Built by Lisa Ross. 
+    <a href="https://github.com/lisaross/save-to-tana" target="_blank" rel="noopener noreferrer">GitHub repo</a> for info, bugs, or collaboration.
+  </div>
+  <nav class="bento-nav">
+    <div class="bento-title">Save to Tana Options</div>
+    <button id="saveButton" class="bento-save-btn" disabled>Save Options</button>
+    <div id="toast" class="toast"></div>
+  </nav>
+  <main class="bento-grid">
+    <section class="bento-card bento-instructions">
+      <h2>Instructions</h2>
+      <ol class="instructions-list">
+        <li>Go to your <code>#save-to-tana</code> supertag</li>
+        <li>Press <b>Cmd-K</b> (or Ctrl-K on Windows/Linux).</li>
+        <li>Search for and select <b>Show API Schema</b>.</li>
+        <li>Click the <code>Copy payload</code> button.</li>
+        <li>Paste the copied JSON payload in the Schema card, then click <code>Extract Schema</code>.</li>
+        <li>The extension will extract and display the field IDs below.</li>
+        <li>Fill out the rest of the configuration and click <b>Save Options</b>.</li>
+      </ol>
+    </section>
+    <section class="bento-card bento-schema">
+      <h2>Paste Schema & Extract</h2>
+      <label for="tanaSchema">Paste Tana Supertag Schema (API Payload Example):</label>
+      <textarea id="tanaSchema" rows="8" style="width:100%;font-family:monospace;resize:vertical;max-height:500px;" placeholder="Paste your Tana API payload JSON here (from Show API Schema > Copy payload)"></textarea>
+      <button id="extractSchemaButton" style="margin-top:8px;">Extract Schema</button>
+      <button class="toggle-btn" id="toggleExampleJson" aria-expanded="false" aria-controls="exampleJsonBlock">
+        <span class="toggle-icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;"><path d="M6 4l4 4-4 4" stroke="#8b949e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span id="toggleExampleJsonLabel">Show Example JSON</span>
+      </button>
+      <div id="exampleJsonBlock" style="display:none;">
+        <b>Example JSON:</b>
+        <pre>{
+  "nodes": [
+    {
+      "name": "New node",
+      "supertags": [
+        { "id": "R1RGcNI0g1ui" }
+      ],
+      "children": [
+        { "type": "field", "attributeId": "uhrM6T8Fw_cV", "children": [{ "dataType": "url", "name": "https://tana.inc/" }] },
+        { "type": "field", "attributeId": "JFfGHKU_YHmO", "children": [{ "name": "Field value" }] },
+        { "type": "field", "attributeId": "T9BS_5h4EMQH", "children": [{ "name": "Field value" }] },
+        { "type": "field", "attributeId": "ErJaHS4DcnL-", "children": [{ "name": "Field value" }] }
+      ]
+    }
+  ]
+}</pre>
+      </div>
+      <div class="form-group" id="extractedFields" style="display:none;">
+        <label>Extracted Field IDs:</label>
+        <pre id="extractedFieldIds"></pre>
+      </div>
+    </section>
+    <section class="bento-card bento-api">
+      <h2>API Token & Target Node</h2>
+      <label for="apiKey">Tana API Token:</label>
+      <textarea id="apiKey" rows="7" style="width:100%;resize:vertical;" placeholder="Enter your Tana API token"></textarea>
+      <div class="help-text">Generate this in Tana: Settings &gt; API Tokens</div>
+      <label for="targetNodeId">Target Node ID:</label>
+      <input type="text" id="targetNodeId" placeholder="Enter your target node ID (e.g., inbox)">
+      <div class="help-text">
+        <ol style="margin: 0 0 0 1.2em; padding: 0; font-size: 0.98em;">
+          <li>Right-click on the node you want to copy the ID from</li>
+          <li>Select "Copy link" from the context menu</li>
+          <li>The link will be copied to your clipboard in the format:<br>
+            <code>https://app.tana.inc?nodeid=ABCD1234</code>
+          </li>
+          <li>The part after <b>nodeid=</b> is your node ID (e.g., <code>ABCD1234</code>)</li>
+        </ol>
+      </div>
+    </section>
+    <section class="bento-card bento-fields">
+      <h2>Field Attribute IDs</h2>
+      <label for="supertagId"><b>Save to Tana Supertag ID:</b></label>
+      <input type="text" id="supertagId" placeholder="e.g. R1RGcNI0g1ui">
+      <label for="fieldIdUrl"><b>URL</b> Field ID:</label>
+      <input type="text" id="fieldIdUrl" placeholder="e.g. uhrM6T8Fw_cV">
+      <label for="fieldIdAuthor"><b>Author</b> Field ID:</label>
+      <input type="text" id="fieldIdAuthor" placeholder="e.g. JFfGHKU_YHmO">
+      <label for="fieldIdDescription"><b>Description</b> Field ID:</label>
+      <input type="text" id="fieldIdDescription" placeholder="e.g. T9BS_5h4EMQH">
+      <label for="fieldIdContent"><b>Content</b> Field ID:</label>
+      <input type="text" id="fieldIdContent" placeholder="e.g. ErJaHS4DcnL-">
+      <div class="help-text">These are the attribute IDs for your Tana supertag schema. They will be auto-filled if you extract a schema, but you can edit them if needed before saving options.</div>
+    </section>
+  </main>
+  <script src="options.js"></script>
+</body>
+</html>

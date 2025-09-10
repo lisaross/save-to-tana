@@ -1,0 +1,602 @@
+/* Modern GitHub Dark Mode Inspired Styles for Chrome Extension */
+
+html, body {
+  background: #0d1117;
+  color: #c9d1d9;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Liberation Sans", Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100px;
+  padding: 24px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.container, .form-group, .card {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  padding: 24px 24px 16px 24px;
+  margin-bottom: 24px;
+  width: 100%;
+  max-width: 480px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #f0f6fc;
+  font-weight: 700;
+  margin-top: 0;
+  margin-bottom: 16px;
+  letter-spacing: -0.5px;
+}
+
+label {
+  color: #c9d1d9;
+  font-weight: 500;
+  margin-bottom: 6px;
+  display: block;
+}
+
+input, textarea, select {
+  background: #0d1117;
+  color: #c9d1d9;
+  border: 1.5px solid #30363d;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 1em;
+  margin-bottom: 14px;
+  width: 100%;
+  transition: border 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: #8b949e;
+  box-shadow: 0 0 0 2px #30363d;
+}
+
+button, input[type="button"], input[type="submit"] {
+  background: #21262d;
+  color: #f0f6fc;
+  border: 1.5px solid #30363d;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+  margin-top: 8px;
+}
+button:hover, input[type="button"]:hover, input[type="submit"]:hover {
+  background: #30363d;
+  border-color: #8b949e;
+}
+button:disabled, input[type="button"]:disabled, input[type="submit"]:disabled {
+  background: #23272e;
+  color: #666;
+  border-color: #23272e;
+  cursor: not-allowed;
+}
+
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.status, .not-configured {
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 15px;
+  margin-top: 12px;
+  margin-bottom: 8px;
+  background: #21262d;
+  border: 1px solid #30363d;
+  color: #c9d1d9;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+.success {
+  background: #1a7f37;
+  color: #fff;
+  border-color: #238636;
+}
+.error {
+  background: #b62324;
+  color: #fff;
+  border-color: #da3633;
+}
+
+.settings-link {
+  font-size: 13px;
+  text-align: center;
+  margin-top: 12px;
+}
+.settings-link a {
+  color: #8b949e;
+  text-decoration: underline;
+}
+.settings-link a:hover {
+  color: #f0f6fc;
+}
+
+/* --- PRE BLOCKS (CODE/EXTRACTED FIELDS/EXAMPLE JSON) --- */
+pre, code {
+  background: #22272e !important;
+  color: #f0f6fc !important;
+  border-radius: 8px;
+  padding: 14px 16px;
+  font-size: 0.97em;
+  overflow-x: auto;
+  margin-bottom: 16px;
+  border: 1px solid #30363d;
+  font-family: 'Fira Mono', 'Consolas', 'Menlo', 'Monaco', 'monospace';
+  box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+}
+
+.help-text {
+  color: #8b949e;
+  font-size: 14px;
+  margin-top: 6px;
+  margin-bottom: 10px;
+}
+
+.help-text code {
+  display: inline;
+  background: #22272e;
+  color: #c9d1d9;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 0.98em;
+  box-shadow: none;
+  border: none;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  background: #161b22;
+}
+::-webkit-scrollbar-thumb {
+  background: #30363d;
+  border-radius: 4px;
+}
+
+input[type="checkbox"], input[type="radio"] {
+  accent-color: #8b949e;
+  width: 18px;
+  height: 18px;
+}
+
+/* Utility classes */
+.mt-1 { margin-top: 12px; }
+.mb-1 { margin-bottom: 12px; }
+.p-1 { padding: 12px; }
+
+/* Remove outline for mouse users but keep for keyboard */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* --- OPTIONS PAGE LAYOUT --- */
+.options-flex {
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 1100px;
+  margin-bottom: 24px;
+}
+.grouped-card {
+  background: #161b22;
+  border: 1.5px solid #30363d;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  padding: 32px 28px 28px 28px;
+  display: flex;
+  flex-direction: column;
+  min-width: 340px;
+  max-width: 400px;
+  position: relative;
+}
+.save-options-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.grouped-card .form-group {
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  margin-bottom: 18px;
+}
+.grouped-card .form-group:last-child {
+  margin-bottom: 0;
+}
+@media (max-width: 1100px) {
+  .options-flex {
+    max-width: 100%;
+    gap: 16px;
+  }
+  .grouped-card {
+    min-width: 0;
+    max-width: 100%;
+    padding: 24px 12px 18px 12px;
+  }
+}
+@media (max-width: 800px) {
+  .options-flex {
+    flex-direction: column;
+    gap: 0;
+    max-width: 100%;
+  }
+  .grouped-card {
+    margin-top: 24px;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
+/* --- POPUP PADDING --- */
+.container {
+  padding: 28px 24px 24px 24px;
+  margin: 14px;
+  box-sizing: border-box;
+  max-width: 340px;
+}
+
+#status {
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+  display: none;
+}
+#status:not(:empty) {
+  display: block;
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: #21262d;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  color: #c9d1d9;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+#save-button {
+  margin-bottom: 18px;
+}
+
+.settings-link {
+  margin-top: 18px;
+}
+
+/* --- TOGGLE BUTTON --- */
+.toggle-btn {
+  background: none;
+  color: #8b949e;
+  border: none;
+  font-size: 15px;
+  cursor: pointer;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.2s;
+}
+.toggle-btn:hover, .toggle-btn:focus {
+  color: #f0f6fc;
+  outline: none;
+}
+.toggle-icon {
+  display: inline-block;
+  transition: transform 0.2s;
+}
+.toggle-icon svg {
+  transition: transform 0.2s, stroke 0.2s;
+  vertical-align: middle;
+}
+.toggle-btn[aria-expanded="true"] .toggle-icon svg {
+  transform: rotate(90deg);
+}
+.toggle-btn:hover .toggle-icon svg,
+.toggle-btn:focus .toggle-icon svg {
+  stroke: #f0f6fc;
+}
+
+/* Save Options button in top right */
+.save-options-top {
+  position: absolute;
+  top: 32px;
+  right: 60px;
+  z-index: 10;
+}
+
+/* Toast notification */
+.toast {
+  position: absolute;
+  top: 80px;
+  right: 60px;
+  background: #21262d;
+  color: #f0f6fc;
+  border: 1.5px solid #30363d;
+  border-radius: 8px;
+  padding: 14px 24px;
+  font-size: 1em;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s, top 0.3s;
+}
+.toast.show {
+  opacity: 1;
+  pointer-events: auto;
+  top: 100px;
+}
+.toast.success {
+  background: #1a7f37;
+  color: #fff;
+  border-color: #238636;
+}
+.toast.error {
+  background: #b62324;
+  color: #fff;
+  border-color: #da3633;
+}
+
+/* Make textarea even taller */
+#tanaSchema {
+  min-height: 420px !important;
+  font-size: 1.08em;
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+/* --- BENTO LAYOUT --- */
+.bento-nav {
+  width: 100%;
+  background: #161b22;
+  border-bottom: 1.5px solid #30363d;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  height: 64px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  margin: 0;
+  box-sizing: border-box;
+}
+.bento-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #f0f6fc;
+  letter-spacing: -1px;
+}
+.bento-save-btn {
+  background: #21262d;
+  color: #f0f6fc;
+  border: 1.5px solid #30363d;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+  margin-left: 16px;
+}
+.bento-save-btn:disabled {
+  background: #23272e;
+  color: #666;
+  border-color: #23272e;
+  cursor: not-allowed;
+}
+
+.bento-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "instructions schema"
+    "api fields";
+  gap: 32px;
+  max-width: 1200px;
+  margin: 32px auto 0 auto;
+  padding: 0 40px 40px 40px;
+}
+.bento-instructions {
+  grid-area: instructions;
+}
+.bento-schema {
+  grid-area: schema;
+}
+.bento-api {
+  grid-area: api;
+}
+.bento-fields {
+  grid-area: fields;
+}
+.bento-instructions {
+  min-width: 220px;
+  max-width: 340px;
+}
+.bento-schema {
+  min-width: 320px;
+}
+.bento-api, .bento-fields {
+  min-width: 220px;
+}
+.bento-card {
+  background: #161b22;
+  border: 1.5px solid #30363d;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  padding: 32px 28px 28px 28px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.bento-card h2 {
+  margin-top: 0;
+  margin-bottom: 18px;
+  font-size: 1.25rem;
+  color: #f0f6fc;
+  font-weight: 600;
+}
+
+@media (max-width: 1000px) {
+  .bento-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto auto;
+    grid-template-areas:
+      "instructions"
+      "schema"
+      "api"
+      "fields";
+    gap: 24px;
+    padding: 0 12px 32px 12px;
+  }
+  .bento-instructions, .bento-schema, .bento-api, .bento-fields {
+    max-width: 100%;
+    min-width: 0;
+  }
+}
+
+/* Toast notification below nav, top right */
+.toast {
+  position: fixed;
+  top: 80px;
+  right: 60px;
+  background: #21262d;
+  color: #f0f6fc;
+  border: 1.5px solid #30363d;
+  border-radius: 8px;
+  padding: 14px 24px;
+  font-size: 1em;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s, top 0.3s;
+}
+.toast.show {
+  opacity: 1;
+  pointer-events: auto;
+  top: 100px;
+}
+.toast.success {
+  background: #1a7f37;
+  color: #fff;
+  border-color: #238636;
+}
+.toast.error {
+  background: #b62324;
+  color: #fff;
+  border-color: #da3633;
+}
+
+/* Remove old grouped card/side-col styles */
+.grouped-card, .side-col, .main-col, .save-options-row { display: none !important; }
+
+/* --- END BENTO LAYOUT --- */
+
+.instructions-list {
+  font-size: 0.92rem;
+  color: #c9d1d9;
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+  margin-bottom: 0;
+  margin-top: 0;
+  list-style-position: inside;
+}
+.instructions-list li {
+  margin-bottom: 0.5em;
+}
+.instructions-list code {
+  display: inline;
+  background: #22272e;
+  color: #c9d1d9;
+  padding: 0 2px;
+  border-radius: 1px;
+  font-size: 0.98em;
+  box-shadow: none;
+  border: none;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.bento-card label {
+  margin-top: 10px;
+  margin-bottom: 4px;
+  font-weight: 500;
+  color: #c9d1d9;
+}
+.bento-card input[type="text"], .bento-card textarea {
+  margin-bottom: 10px;
+}
+
+.bento-card .help-text {
+  margin-top: 0;
+  margin-bottom: 0.5em;
+}
+
+#tanaSchema {
+  max-height: 500px !important;
+  min-height: 120px !important;
+  font-size: 1.08em;
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+#apiKey {
+  min-height: 80px;
+  max-height: 200px;
+  font-size: 1.08em;
+  line-height: 1.5;
+  margin-bottom: 10px;
+  background: #0d1117;
+  color: #c9d1d9;
+  border: 1.5px solid #30363d;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.notice-bar {
+  width: 100%;
+  background: #23272e;
+  color: #8b949e;
+  text-align: center;
+  font-size: 0.98em;
+  padding: 8px 0 7px 0;
+  margin: 0;
+  border-bottom: 1px solid #30363d;
+  letter-spacing: 0.01em;
+}
+.notice-bar a {
+  color: #58a6ff;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+.notice-bar a:hover {
+  color: #f0f6fc;
+}
