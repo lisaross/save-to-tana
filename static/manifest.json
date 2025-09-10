@@ -14,7 +14,7 @@
     "quick-save": {
       "suggested_key": {
         "default": "Alt+Shift+T",
-        "mac": "Ctrl+Alt+T"
+        "mac": "Command+Shift+T"
       },
       "description": "Quick save current page to Tana"
     },

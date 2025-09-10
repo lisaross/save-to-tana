@@ -16,6 +16,10 @@ import { buildTanaPayload } from './tanaPayloadBuilder';
  * Background script - handles API communication with Tana and orchestrates extension events
  */
 
+// Rate limiting to prevent "Token was used too recently" errors
+let lastApiCall = 0;
+const MIN_API_INTERVAL = 2000; // 2 seconds between API calls
+
 // Extension installation and setup
 chrome.runtime.onInstalled.addListener(async () => {
   console.log('Save to Tana extension installed');
@@ -159,6 +163,15 @@ async function saveToTana(data: SaveData): Promise<SaveResponse> {
   try {
     console.log('Starting saveToTana with data:', data);
     
+    // Rate limiting check
+    const now = Date.now();
+    const timeSinceLastCall = now - lastApiCall;
+    if (timeSinceLastCall < MIN_API_INTERVAL) {
+      const waitTime = MIN_API_INTERVAL - timeSinceLastCall;
+      console.log(`Rate limiting: waiting ${waitTime}ms before API call`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+    
     // Get API key, target node ID, and schema info from storage
     const result = await getStorageConfig();
     
@@ -178,6 +191,7 @@ async function saveToTana(data: SaveData): Promise<SaveResponse> {
     console.log('Formatted Tana payload:', tanaPayload);
     
     // Send data to Tana API
+    lastApiCall = Date.now(); // Update timestamp before API call
     const responseData = await sendToTanaApi(tanaPayload, result.apiKey);
     
     return {
@@ -554,15 +568,21 @@ async function extractPageContent(
 function showNotification(message: string, type: 'success' | 'error' = 'success'): void {
   const notificationId = `tana-${Date.now()}`;
   
-  chrome.notifications.create(notificationId, {
-    type: 'basic',
-    // iconUrl: 'images/icon48.png', // Removed to fix download error
-    title: 'Save to Tana',
-    message: message
-  });
+  try {
+    chrome.notifications.create(notificationId, {
+      type: 'basic',
+      iconUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', // 1x1 transparent pixel
+      title: 'Save to Tana',
+      message: message
+    });
 
-  // Auto-clear notification after 3 seconds
-  setTimeout(() => {
-    chrome.notifications.clear(notificationId);
-  }, 3000);
+    // Auto-clear notification after 3 seconds
+    setTimeout(() => {
+      chrome.notifications.clear(notificationId);
+    }, 3000);
+  } catch (error) {
+    console.log('Notification error (non-critical):', error);
+    // Fallback: just log the message if notifications fail
+    console.log(`Save to Tana: ${message}`);
+  }
 }
