@@ -32,20 +32,24 @@ chrome.omnibox.onInputChanged.addListener((text, suggest) => {
   const suggestions = [];
   
   if (text.trim() === '') {
-    // Empty input - suggest quick save
+    // Empty input - suggest default actions
     suggestions.push({
-      content: 'quick-save',
+      content: 'quick',
       description: 'Quick save current page'
     });
-  } else {
-    // User typed something - suggest save with custom title
     suggestions.push({
-      content: `save:${text}`,
+      content: 'notes',
+      description: 'Save with notes dialog'
+    });
+  } else {
+    // User typed something - treat as custom title
+    suggestions.push({
+      content: text,
       description: `Save current page with title: "${text}"`
     });
     suggestions.push({
-      content: `quick:${text}`,
-      description: `Quick save current page (ignore text)`
+      content: `quick`,
+      description: `Quick save current page (original title)`
     });
   }
   
@@ -56,23 +60,14 @@ chrome.omnibox.onInputEntered.addListener(async (text, disposition) => {
   const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!activeTab?.id) return;
 
-  if (text === 'quick-save' || text.trim() === '') {
-    // Quick save for empty input or explicit quick-save
+  if (text === 'quick') {
+    // Quick save
     await handleQuickSave(activeTab.id);
-  } else if (text.startsWith('save:')) {
-    // Save with custom title
-    const customTitle = text.substring(5).trim();
-    if (customTitle) {
-      await handleSaveWithCustomTitle(activeTab.id, customTitle);
-    } else {
-      // Empty title after "save:" - do quick save
-      await handleQuickSave(activeTab.id);
-    }
-  } else if (text.startsWith('quick:')) {
-    // Quick save (ignoring any text after "quick:")
-    await handleQuickSave(activeTab.id);
+  } else if (text === 'notes') {
+    // Save with notes dialog
+    await handleSaveWithNotes(activeTab.id);
   } else {
-    // User typed plain text - save with that as custom title
+    // User typed text - treat as custom title
     await handleSaveWithCustomTitle(activeTab.id, text.trim());
   }
 });
@@ -440,26 +435,31 @@ async function handleSaveWithNotes(tabId: number): Promise<void> {
 }
 
 /**
- * Handle save with custom title from omnibox
+ * Handle save with custom notes from omnibox
  */
-async function handleSaveWithCustomTitle(tabId: number, customTitle: string): Promise<void> {
+async function handleSaveWithCustomTitle(tabId: number, customNotes: string): Promise<void> {
   try {
     // Extract content first
     const pageData = await extractPageContent(tabId);
     if (pageData) {
-      // Override the title with custom title
-      pageData.title = customTitle;
+      // Keep original title, but prepend custom notes to content
+      if (customNotes.trim()) {
+        pageData.content = customNotes + '\n\n' + pageData.content;
+      }
+      
       const result = await saveToTana(pageData);
       
       if (result.success) {
-        showNotification(`Page saved to Tana with title: "${customTitle}"`, 'success');
+        showNotification(`Page saved to Tana with notes: "${customNotes}"`, 'success');
       } else {
         showNotification(result.error || 'Save failed', 'error');
       }
+    } else {
+      showNotification('Failed to extract page content', 'error');
     }
   } catch (error) {
-    console.error('Save with custom title error:', error);
-    showNotification('Save with custom title failed', 'error');
+    console.error('Save with custom notes error:', error);
+    showNotification('Save with custom notes failed', 'error');
   }
 }
 
