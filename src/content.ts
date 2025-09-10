@@ -44,7 +44,6 @@ chrome.runtime.onMessage.addListener((
   sender: chrome.runtime.MessageSender,
   sendResponse: (response: any) => void
 ) => {
-  console.log('Content script received message:', request.action);
 
   if (request.action === 'extractContent') {
     const options = request.options || { includeContent: true, includeTitle: true };
@@ -225,8 +224,8 @@ function showOverlay(pageData: PageData): void {
     overlayElement = document.createElement('div');
     overlayElement.id = 'tana-save-overlay';
     
-    // Apply overlay styles and HTML
-    overlayElement.innerHTML = getOverlayHTML(pageData);
+    // Apply overlay styles and HTML safely
+    createOverlayStructure(overlayElement, pageData);
     
     // Inject overlay styles
     injectOverlayStyles();
@@ -250,7 +249,6 @@ function showOverlay(pageData: PageData): void {
       }
     }, 100);
     
-    console.log('Tana overlay shown successfully');
   } catch (error) {
     console.error('Error showing overlay:', error);
     // Clean up on error
@@ -279,9 +277,9 @@ function hideOverlay(): void {
 }
 
 /**
- * Generate the overlay HTML
+ * Create overlay structure safely using DOM methods
  */
-function getOverlayHTML(pageData: PageData): string {
+function createOverlayStructure(container: HTMLElement, pageData: PageData): void {
   const truncatedTitle = pageData.title.length > 60 
     ? pageData.title.substring(0, 60) + '...' 
     : pageData.title;
@@ -290,51 +288,104 @@ function getOverlayHTML(pageData: PageData): string {
     ? pageData.url.substring(0, 50) + '...' 
     : pageData.url;
 
-  return `
-    <div class="tana-overlay-backdrop">
-      <div class="tana-overlay-dialog">
-        <div class="tana-overlay-header">
-          <h2>Save to Tana</h2>
-          <button type="button" class="tana-overlay-close" id="tana-close-overlay">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <path d="M13.5 4.5l-9 9M4.5 4.5l9 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          </button>
-        </div>
-        
-        <div class="tana-overlay-content">
-          <div class="tana-overlay-preview">
-            <div class="tana-overlay-page-info">
-              <div class="tana-overlay-page-title">${escapeHtml(truncatedTitle)}</div>
-              <div class="tana-overlay-page-url">${escapeHtml(truncatedUrl)}</div>
-            </div>
-          </div>
-          
-          <div class="tana-overlay-notes-section">
-            <label for="tana-notes-input" class="tana-overlay-label">
-              Add notes (optional)
-            </label>
-            <textarea 
-              id="tana-notes-input" 
-              class="tana-overlay-notes-input" 
-              placeholder="Add your notes here..."
-              rows="4"
-            ></textarea>
-          </div>
-          
-          <div class="tana-overlay-actions">
-            <button type="button" class="tana-overlay-button tana-overlay-button-secondary" id="tana-cancel-save">
-              Cancel
-            </button>
-            <button type="button" class="tana-overlay-button tana-overlay-button-primary" id="tana-confirm-save">
-              Save to Tana
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
+  // Create backdrop
+  const backdrop = document.createElement('div');
+  backdrop.className = 'tana-overlay-backdrop';
+  
+  // Create dialog
+  const dialog = document.createElement('div');
+  dialog.className = 'tana-overlay-dialog';
+  
+  // Create header
+  const header = document.createElement('div');
+  header.className = 'tana-overlay-header';
+  
+  const title = document.createElement('h2');
+  title.textContent = 'Save to Tana';
+  
+  const closeButton = document.createElement('button');
+  closeButton.type = 'button';
+  closeButton.className = 'tana-overlay-close';
+  closeButton.id = 'tana-close-overlay';
+  closeButton.innerHTML = `<svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+    <path d="M13.5 4.5l-9 9M4.5 4.5l9 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  </svg>`;
+  
+  header.appendChild(title);
+  header.appendChild(closeButton);
+  
+  // Create content
+  const content = document.createElement('div');
+  content.className = 'tana-overlay-content';
+  
+  // Create preview section
+  const preview = document.createElement('div');
+  preview.className = 'tana-overlay-preview';
+  
+  const pageInfo = document.createElement('div');
+  pageInfo.className = 'tana-overlay-page-info';
+  
+  const pageTitle = document.createElement('div');
+  pageTitle.className = 'tana-overlay-page-title';
+  pageTitle.textContent = truncatedTitle;
+  
+  const pageUrl = document.createElement('div');
+  pageUrl.className = 'tana-overlay-page-url';
+  pageUrl.textContent = truncatedUrl;
+  
+  pageInfo.appendChild(pageTitle);
+  pageInfo.appendChild(pageUrl);
+  preview.appendChild(pageInfo);
+  
+  // Create notes section
+  const notesSection = document.createElement('div');
+  notesSection.className = 'tana-overlay-notes-section';
+  
+  const label = document.createElement('label');
+  label.setAttribute('for', 'tana-notes-input');
+  label.className = 'tana-overlay-label';
+  label.textContent = 'Add notes (optional)';
+  
+  const textarea = document.createElement('textarea');
+  textarea.id = 'tana-notes-input';
+  textarea.className = 'tana-overlay-notes-input';
+  textarea.placeholder = 'Add your notes here...';
+  textarea.rows = 4;
+  
+  notesSection.appendChild(label);
+  notesSection.appendChild(textarea);
+  
+  // Create actions section
+  const actions = document.createElement('div');
+  actions.className = 'tana-overlay-actions';
+  
+  const cancelButton = document.createElement('button');
+  cancelButton.type = 'button';
+  cancelButton.className = 'tana-overlay-button tana-overlay-button-secondary';
+  cancelButton.id = 'tana-cancel-save';
+  cancelButton.textContent = 'Cancel';
+  
+  const saveButton = document.createElement('button');
+  saveButton.type = 'button';
+  saveButton.className = 'tana-overlay-button tana-overlay-button-primary';
+  saveButton.id = 'tana-confirm-save';
+  saveButton.textContent = 'Save to Tana';
+  
+  actions.appendChild(cancelButton);
+  actions.appendChild(saveButton);
+  
+  // Assemble everything
+  content.appendChild(preview);
+  content.appendChild(notesSection);
+  content.appendChild(actions);
+  
+  dialog.appendChild(header);
+  dialog.appendChild(content);
+  
+  backdrop.appendChild(dialog);
+  container.appendChild(backdrop);
 }
+
 
 /**
  * Inject CSS styles for the overlay
@@ -762,14 +813,6 @@ function showToast(message: string, type: 'success' | 'error' = 'success'): void
   }, 3000);
 }
 
-/**
- * Escape HTML characters
- */
-function escapeHtml(text: string): string {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
 
 /**
  * Clean up overlay when page unloads
