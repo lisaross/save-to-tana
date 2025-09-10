@@ -1,4 +1,10 @@
-import type { SaveData, TanaFieldIds, TanaNode, TanaNodeChildContent, TanaPayload } from './types';
+import { 
+  SaveData, 
+  TanaFieldIds, 
+  TanaPayload, 
+  TanaNode,
+  TanaNodeChildContent
+} from './types/index';
 import { sanitizeText, splitIntoChunks } from './utils/textUtils';
 
 /**
@@ -10,10 +16,10 @@ import { sanitizeText, splitIntoChunks } from './utils/textUtils';
  * @returns Tana API payload
  */
 export function buildTanaPayload(
-  data: SaveData,
-  targetNodeId: string,
-  supertagId: string,
-  fieldIds: TanaFieldIds,
+  data: SaveData, 
+  targetNodeId: string, 
+  supertagId: string, 
+  fieldIds: TanaFieldIds
 ): TanaPayload {
   // Validate required parameters
   if (!data) {
@@ -33,7 +39,7 @@ export function buildTanaPayload(
   const mainNode: TanaNode = {
     name: sanitizeText(data.title || data.url),
     supertags: [{ id: supertagId }],
-    children: [],
+    children: []
   };
 
   // Add URL field
@@ -41,51 +47,57 @@ export function buildTanaPayload(
     mainNode.children.push({
       type: 'field',
       attributeId: fieldIds.URL,
-      children: [{ dataType: 'url', name: data.url }],
+      children: [{ dataType: 'url', name: data.url }]
     });
   }
-
+  
   // Add Author field
   if (data.author && fieldIds.Author) {
     mainNode.children.push({
       type: 'field',
       attributeId: fieldIds.Author,
-      children: [{ name: sanitizeText(data.author) }],
+      children: [{ name: sanitizeText(data.author) }]
     });
   }
-
+  
   // Add Description field
   if (data.description && fieldIds.Description) {
     mainNode.children.push({
       type: 'field',
       attributeId: fieldIds.Description,
-      children: [{ name: sanitizeText(data.description) }],
+      children: [{ name: sanitizeText(data.description) }]
     });
   }
-
+  
+  // Add user notes as a direct child node (appears in body)
+  if (data.notes && data.notes.trim()) {
+    mainNode.children.push({
+      name: sanitizeText(data.notes)
+    });
+  }
+  
   // Add Content field (chunked if needed)
   if (data.content && fieldIds.Content) {
     const sanitizedContent = sanitizeText(data.content);
     const maxContentLength = 4000;
     let contentChunks: TanaNodeChildContent[] = [];
-
+    
     if (sanitizedContent.length > maxContentLength) {
-      contentChunks = splitIntoChunks(sanitizedContent, maxContentLength).map((chunk) => ({
-        name: chunk,
-      }));
+      contentChunks = splitIntoChunks(sanitizedContent, maxContentLength)
+        .map(chunk => ({ name: chunk }));
     } else {
       contentChunks = [{ name: sanitizedContent }];
     }
-
+    
     mainNode.children.push({
       type: 'field',
       attributeId: fieldIds.Content,
-      children: contentChunks,
+      children: contentChunks
     });
   }
 
   return {
     targetNodeId,
-    nodes: [mainNode],
+    nodes: [mainNode]
   };
 }
