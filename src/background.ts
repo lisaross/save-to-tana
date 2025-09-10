@@ -78,20 +78,32 @@ chrome.omnibox.onInputEntered.addListener(async (text, disposition) => {
 
 // Keyboard command handlers
 chrome.commands.onCommand.addListener(async (command) => {
-  console.log(`Command received: ${command}`);
+  console.log(`🎹 KEYBOARD COMMAND RECEIVED: ${command}`);
+  
+  // Show immediate notification that command was received
+  showNotification(`Keyboard command received: ${command}`, 'success');
   
   const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!activeTab?.id) return;
+  if (!activeTab?.id) {
+    console.log('❌ No active tab found');
+    showNotification('No active tab found', 'error');
+    return;
+  }
+
+  console.log(`📋 Processing command "${command}" for tab ${activeTab.id}: ${activeTab.title}`);
 
   switch (command) {
     case 'quick-save':
+      console.log('🚀 Executing quick save...');
       await handleQuickSave(activeTab.id);
       break;
     case 'save-with-notes':
+      console.log('📝 Executing save with notes...');
       await handleSaveWithNotes(activeTab.id);
       break;
     default:
-      console.log(`Unknown command: ${command}`);
+      console.log(`❓ Unknown command: ${command}`);
+      showNotification(`Unknown command: ${command}`, 'error');
   }
 });
 
