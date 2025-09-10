@@ -1,4 +1,4 @@
-import { TanaConfig, TanaFieldIds } from './types';
+import type { TanaConfig, TanaFieldIds } from './types';
 
 /**
  * Options page interfaces
@@ -43,16 +43,21 @@ export class OptionsController {
     this.extractedFieldIdsPre = document.getElementById('extractedFieldIds') as HTMLPreElement;
     this.fieldIdUrlInput = document.getElementById('fieldIdUrl') as HTMLInputElement;
     this.fieldIdAuthorInput = document.getElementById('fieldIdAuthor') as HTMLInputElement;
-    this.fieldIdDescriptionInput = document.getElementById('fieldIdDescription') as HTMLInputElement;
+    this.fieldIdDescriptionInput = document.getElementById(
+      'fieldIdDescription',
+    ) as HTMLInputElement;
     this.fieldIdContentInput = document.getElementById('fieldIdContent') as HTMLInputElement;
     this.toast = document.getElementById('toast') as HTMLDivElement;
-    
+
     // Create schema error div
     this.schemaErrorDiv = document.createElement('div');
     this.schemaErrorDiv.className = 'status error';
     this.schemaErrorDiv.style.display = 'none';
-    this.tanaSchemaInput.parentNode?.insertBefore(this.schemaErrorDiv, this.tanaSchemaInput.nextSibling);
-    
+    this.tanaSchemaInput.parentNode?.insertBefore(
+      this.schemaErrorDiv,
+      this.tanaSchemaInput.nextSibling,
+    );
+
     // Initialize the page
     this.initializePage();
   }
@@ -63,11 +68,11 @@ export class OptionsController {
   private initializePage(): void {
     // Load saved configuration
     this.loadConfiguration();
-    
+
     // Add event listeners
     this.saveButton.addEventListener('click', this.saveConfiguration.bind(this));
     this.extractSchemaButton.addEventListener('click', this.extractSchemaFromTextarea.bind(this));
-    
+
     // Add input event listeners for validation
     this.apiKeyInput.addEventListener('input', this.validateForm.bind(this));
     this.targetNodeIdInput.addEventListener('input', this.validateForm.bind(this));
@@ -76,7 +81,7 @@ export class OptionsController {
     this.fieldIdAuthorInput.addEventListener('input', this.validateForm.bind(this));
     this.fieldIdDescriptionInput.addEventListener('input', this.validateForm.bind(this));
     this.fieldIdContentInput.addEventListener('input', this.validateForm.bind(this));
-    
+
     // Initialize example JSON toggle
     this.initializeExampleJsonToggle();
   }
@@ -104,31 +109,31 @@ export class OptionsController {
    */
   private loadConfiguration(): void {
     chrome.storage.sync.get(
-      ['apiKey', 'supertagId', 'targetNodeId', 'tanaFieldIds'], 
+      ['apiKey', 'supertagId', 'targetNodeId', 'tanaFieldIds'],
       (result: Partial<TanaConfig>) => {
         console.log('Loaded configuration:', result);
-        
+
         if (result.apiKey) {
           this.apiKeyInput.value = result.apiKey;
         }
-        
+
         if (result.targetNodeId) {
           this.targetNodeIdInput.value = result.targetNodeId;
         }
-        
+
         if (result.supertagId) {
           this.supertagIdInput.value = result.supertagId;
         }
-        
+
         if (result.tanaFieldIds) {
           this.fieldIdUrlInput.value = result.tanaFieldIds.URL || '';
           this.fieldIdAuthorInput.value = result.tanaFieldIds.Author || '';
           this.fieldIdDescriptionInput.value = result.tanaFieldIds.Description || '';
           this.fieldIdContentInput.value = result.tanaFieldIds.Content || '';
         }
-        
+
         this.validateForm();
-      }
+      },
     );
   }
 
@@ -143,39 +148,47 @@ export class OptionsController {
       URL: this.fieldIdUrlInput.value.trim(),
       Author: this.fieldIdAuthorInput.value.trim(),
       Description: this.fieldIdDescriptionInput.value.trim(),
-      Content: this.fieldIdContentInput.value.trim()
+      Content: this.fieldIdContentInput.value.trim(),
     };
-    
+
     // Validate required fields
     if (!apiKey) {
       this.showToast('API Token is required', true);
       return;
     }
-    
+
     if (!targetNodeId) {
       this.showToast('Target Node ID is required', true);
       return;
     }
-    
+
     if (!supertagId) {
       this.showToast('Save to Tana Supertag ID is required. Please extract schema.', true);
       return;
     }
-    
-    if (!tanaFieldIds.URL || !tanaFieldIds.Author || !tanaFieldIds.Description || !tanaFieldIds.Content) {
+
+    if (
+      !tanaFieldIds.URL ||
+      !tanaFieldIds.Author ||
+      !tanaFieldIds.Description ||
+      !tanaFieldIds.Content
+    ) {
       this.showToast('All field IDs are required.', true);
       return;
     }
-    
+
     // Save configuration to storage
-    chrome.storage.sync.set({
-      apiKey,
-      targetNodeId,
-      supertagId,
-      tanaFieldIds
-    }, () => {
-      this.showToast('Configuration saved successfully!');
-    });
+    chrome.storage.sync.set(
+      {
+        apiKey,
+        targetNodeId,
+        supertagId,
+        tanaFieldIds,
+      },
+      () => {
+        this.showToast('Configuration saved successfully!');
+      },
+    );
   }
 
   /**
@@ -185,7 +198,7 @@ export class OptionsController {
     const apiKey = this.apiKeyInput.value.trim();
     const targetNodeId = this.targetNodeIdInput.value.trim();
     const supertagId = this.supertagIdInput.value.trim();
-    
+
     // Enable save button if we have all required fields
     this.saveButton.disabled = !apiKey || !targetNodeId || !supertagId;
   }
@@ -197,13 +210,15 @@ export class OptionsController {
    */
   private showToast(message: string, isError = false): void {
     if (!this.toast) return;
-    
+
     this.toast.textContent = message;
-    this.toast.className = 'toast' + (isError ? ' error' : ' success') + ' show';
-    
+    this.toast.className = `toast${isError ? ' error' : ' success'} show`;
+
     setTimeout(() => {
-      this.toast.className = 'toast' + (isError ? ' error' : ' success');
-      this.toast.textContent = '';
+      if (this.toast) {
+        this.toast.className = `toast${isError ? ' error' : ' success'}`;
+        this.toast.textContent = '';
+      }
     }, 5000);
   }
 
@@ -213,50 +228,59 @@ export class OptionsController {
   private extractSchemaFromTextarea(): void {
     this.schemaErrorDiv.style.display = 'none';
     this.schemaErrorDiv.textContent = '';
-    
+
     const raw = this.tanaSchemaInput.value;
-    let schema;
-    
+    let schema: unknown;
+
     try {
       schema = JSON.parse(raw);
     } catch (e) {
       const error = e as Error;
-      this.schemaErrorDiv.textContent = 'Could not parse JSON. Please paste the API payload as copied from Tana. Error: ' + error.message;
+      this.schemaErrorDiv.textContent =
+        'Could not parse JSON. Please paste the API payload as copied from Tana. Error: ' +
+        error.message;
       this.schemaErrorDiv.style.display = 'block';
       this.extractedFieldsDiv.style.display = 'none';
       return;
     }
-    
+
     try {
       const result = this.extractSchemaInfo(schema);
-      
+
       // Fill the inputs
       this.supertagIdInput.value = result.supertagId;
       this.fieldIdUrlInput.value = result.fieldIds.URL || '';
       this.fieldIdAuthorInput.value = result.fieldIds.Author || '';
       this.fieldIdDescriptionInput.value = result.fieldIds.Description || '';
       this.fieldIdContentInput.value = result.fieldIds.Content || '';
-      
+
       // Show extracted info as a labeled list
       this.extractedFieldsDiv.style.display = 'block';
       this.extractedFieldIdsPre.innerHTML =
-        'Supertag ID: ' + result.supertagId + '\n' +
-        Object.entries(result.fieldIds).map(([k, v]) => `${k} ID: ${v}`).join('\n');
-      
+        'Supertag ID: ' +
+        result.supertagId +
+        '\n' +
+        Object.entries(result.fieldIds)
+          .map(([k, v]) => `${k} ID: ${v}`)
+          .join('\n');
+
       // Store in chrome.storage, merging with existing apiKey and targetNodeId
       chrome.storage.sync.get(['apiKey', 'targetNodeId'], (existing) => {
-        chrome.storage.sync.set({
-          apiKey: existing.apiKey || '',
-          targetNodeId: existing.targetNodeId || '',
-          supertagId: result.supertagId,
-          tanaFieldIds: result.fieldIds
-        }, () => {
-          this.showToast('Schema extracted and saved!');
-        });
+        chrome.storage.sync.set(
+          {
+            apiKey: existing.apiKey || '',
+            targetNodeId: existing.targetNodeId || '',
+            supertagId: result.supertagId,
+            tanaFieldIds: result.fieldIds,
+          },
+          () => {
+            this.showToast('Schema extracted and saved!');
+          },
+        );
       });
     } catch (e) {
       const error = e as Error;
-      this.schemaErrorDiv.textContent = 'Failed to extract schema info: ' + error.message;
+      this.schemaErrorDiv.textContent = `Failed to extract schema info: ${error.message}`;
       this.schemaErrorDiv.style.display = 'block';
       this.extractedFieldsDiv.style.display = 'none';
     }
@@ -271,14 +295,14 @@ export class OptionsController {
     // Assume first node in nodes array
     const node = Array.isArray(schema.nodes) ? schema.nodes[0] : null;
     if (!node) throw new Error('No nodes found in schema payload.');
-    
+
     // Extract supertagId
     const supertagId = node.supertags?.[0]?.id || '';
     if (!supertagId) throw new Error('No supertag ID found in schema.');
-    
+
     // Extract field IDs by name from children
     const fieldIds: Partial<TanaFieldIds> = {};
-    
+
     if (Array.isArray(node.children)) {
       for (const child of node.children) {
         if (child.type === 'field' && child.attributeId) {
@@ -294,10 +318,10 @@ export class OptionsController {
         }
       }
     }
-    
+
     return {
       supertagId,
-      fieldIds: fieldIds as TanaFieldIds
+      fieldIds: fieldIds as TanaFieldIds,
     };
   }
 
@@ -309,32 +333,33 @@ export class OptionsController {
    */
   static cleanSchemaString(sample: string): string {
     const lines = sample.split('\n');
-    
+
     // Remove type definition line and closing line
     if (lines[0].trim().startsWith('type')) lines.shift();
     if (lines[lines.length - 1].trim().replace(/[;\s]/g, '') === '}') lines.pop();
-    
+
     // Clean each line
     let cleaned = lines
-      .map(line => line
-        .replace(/\/\*[\s\S]*?\*\//g, '')  // Remove block comments
-        .replace(/\/\/.*$/g, '')           // Remove line comments
-        .replace(/^\s*\w+\??:.*;\s*$/g, '') // Remove type definitions
-        .replace(/;/g, '')                 // Remove semicolons
-        .replace(/\?/g, '')                // Remove optional markers
-        .replace(/'/g, '"')                // Replace single quotes with double quotes
-        .trim()
+      .map((line) =>
+        line
+          .replace(/\/\*[\s\S]*?\*\//g, '') // Remove block comments
+          .replace(/\/\/.*$/g, '') // Remove line comments
+          .replace(/^\s*\w+\??:.*;\s*$/g, '') // Remove type definitions
+          .replace(/;/g, '') // Remove semicolons
+          .replace(/\?/g, '') // Remove optional markers
+          .replace(/'/g, '"') // Replace single quotes with double quotes
+          .trim(),
       )
-      .filter(line => line.length > 0)
+      .filter((line) => line.length > 0)
       .join('\n');
-    
+
     // Fix trailing commas and property names
-    cleaned = cleaned.replace(/,\s*([\]\}])/g, '$1');
+    cleaned = cleaned.replace(/,\s*([\]}])/g, '$1');
     cleaned = cleaned.replace(/(^|[,{\s])(\w+):/g, '$1"$2":');
-    
+
     // Ensure it's a valid JSON object
-    if (!cleaned.trim().startsWith('{')) cleaned = '{' + cleaned + '}';
-    
+    if (!cleaned.trim().startsWith('{')) cleaned = `{${cleaned}}`;
+
     return cleaned;
   }
 }

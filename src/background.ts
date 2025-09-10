@@ -1,11 +1,5 @@
-import { 
-  SaveData, 
-  SaveResponse, 
-  TanaConfig, 
-  SaveToTanaRequest,
-  TanaPayload
-} from '../types';
 import { buildTanaPayload } from './tanaPayloadBuilder';
+import type { SaveData, SaveResponse, SaveToTanaRequest, TanaConfig, TanaPayload } from './types';
 
 /**
  * Background script - handles API communication with Tana
@@ -17,28 +11,30 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 
 // Handle messages from popup and content scripts
-chrome.runtime.onMessage.addListener((
-  request: SaveToTanaRequest, 
-  sender: chrome.runtime.MessageSender, 
-  sendResponse: (response: SaveResponse) => void
-) => {
-  if (request.action === 'saveToTana') {
-    saveToTana(request.data)
-      .then(result => {
-        sendResponse(result);
-      })
-      .catch(error => {
-        sendResponse({
-          success: false,
-          error: error instanceof Error ? error.message : 'Unknown error occurred'
+chrome.runtime.onMessage.addListener(
+  (
+    request: SaveToTanaRequest,
+    _sender: chrome.runtime.MessageSender,
+    sendResponse: (response: SaveResponse) => void,
+  ) => {
+    if (request.action === 'saveToTana') {
+      saveToTana(request.data)
+        .then((result) => {
+          sendResponse(result);
+        })
+        .catch((error) => {
+          sendResponse({
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error occurred',
+          });
         });
-      });
-    
-    // Return true to indicate we will send a response asynchronously
-    return true;
-  }
-  return false;
-});
+
+      // Return true to indicate we will send a response asynchronously
+      return true;
+    }
+    return false;
+  },
+);
 
 /**
  * Function to save data to Tana
@@ -48,31 +44,31 @@ chrome.runtime.onMessage.addListener((
 async function saveToTana(data: SaveData): Promise<SaveResponse> {
   try {
     console.log('Starting saveToTana with data:', data);
-    
+
     // Get API key, target node ID, and schema info from storage
     const result = await getStorageConfig();
-    
+
     console.log('Retrieved configuration from storage:', result);
     validateConfig(result);
-    
+
     const targetNodeId = result.targetNodeId;
     console.log('Using target node ID:', targetNodeId);
-    
+
     // Build the payload using the schema
     const tanaPayload = buildTanaPayload(
-      data, 
-      targetNodeId, 
-      result.supertagId, 
-      result.tanaFieldIds
+      data,
+      targetNodeId,
+      result.supertagId,
+      result.tanaFieldIds,
     );
     console.log('Formatted Tana payload:', tanaPayload);
-    
+
     // Send data to Tana API
     const responseData = await sendToTanaApi(tanaPayload, result.apiKey);
-    
+
     return {
       success: true,
-      data: responseData
+      data: responseData,
     };
   } catch (error) {
     console.error('Error saving to Tana:', error);
@@ -86,17 +82,14 @@ async function saveToTana(data: SaveData): Promise<SaveResponse> {
  */
 async function getStorageConfig(): Promise<TanaConfig> {
   return new Promise((resolve, reject) => {
-    chrome.storage.sync.get(
-      ['apiKey', 'targetNodeId', 'supertagId', 'tanaFieldIds'], 
-      (result) => {
-        try {
-          validateConfig(result);
-          resolve(result as TanaConfig);
-        } catch (error) {
-          reject(error);
-        }
+    chrome.storage.sync.get(['apiKey', 'targetNodeId', 'supertagId', 'tanaFieldIds'], (result) => {
+      try {
+        validateConfig(result);
+        resolve(result as TanaConfig);
+      } catch (error) {
+        reject(error);
       }
-    );
+    });
   });
 }
 
@@ -107,19 +100,27 @@ async function getStorageConfig(): Promise<TanaConfig> {
  */
 function validateConfig(config: Partial<TanaConfig>): asserts config is TanaConfig {
   if (!config.apiKey) {
-    throw new Error('API Token not configured. Please go to extension options and set up your configuration.');
+    throw new Error(
+      'API Token not configured. Please go to extension options and set up your configuration.',
+    );
   }
-  
+
   if (!config.supertagId) {
-    throw new Error('Supertag ID not configured. Please extract and save your Tana schema in options.');
+    throw new Error(
+      'Supertag ID not configured. Please extract and save your Tana schema in options.',
+    );
   }
-  
+
   if (!config.targetNodeId) {
-    throw new Error('Target Node ID is required. Please go to options and specify a target node ID.');
+    throw new Error(
+      'Target Node ID is required. Please go to options and specify a target node ID.',
+    );
   }
-  
+
   if (!config.tanaFieldIds) {
-    throw new Error('Field IDs not configured. Please extract and save your Tana schema in options.');
+    throw new Error(
+      'Field IDs not configured. Please extract and save your Tana schema in options.',
+    );
   }
 }
 
@@ -135,19 +136,19 @@ async function sendToTanaApi(payload: TanaPayload, apiKey: string): Promise<any>
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
+      Authorization: `Bearer ${apiKey}`,
     },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
   });
-  
+
   console.log('API response status:', response.status);
-  
+
   if (!response.ok) {
     const errorText = await response.text();
     console.error('API error response:', errorText);
     throw new Error(`API error (${response.status}): ${errorText}`);
   }
-  
+
   const responseData = await response.json();
   console.log('API success response:', responseData);
   return responseData;
