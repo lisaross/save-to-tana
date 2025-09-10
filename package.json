@@ -4,10 +4,10 @@
   "description": "Save web content to Tana",
   "main": "index.js",
   "scripts": {
-    "build": "vite build",
+    "build": "vite build && npm run copy-assets",
     "dev": "vite",
     "clean": "rimraf ./dist/*",
-    "package": "npm run build && npm run copy-assets",
+    "package": "npm run build",
     "copy-assets": "copyfiles -f ./static/* ./dist/ && copyfiles -f ./static/images/* ./dist/images/"
   },
   "keywords": [
