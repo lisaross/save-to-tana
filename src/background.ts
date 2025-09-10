@@ -129,6 +129,7 @@ chrome.runtime.onMessage.addListener((
       handleSaveWithNotesMessage(request as SaveWithNotesRequest, sendResponse);
       return true; // Async response
 
+
     default:
       console.log(`Unknown message action: ${request.action}`);
       sendResponse({ success: false, error: 'Unknown action' });
@@ -377,6 +378,7 @@ async function handleSaveWithNotesMessage(
     });
   }
 }
+
 
 /**
  * Handle quick save from keyboard shortcut or context menu
