@@ -29,16 +29,26 @@ chrome.omnibox.onInputStarted.addListener(() => {
 
 chrome.omnibox.onInputChanged.addListener((text, suggest) => {
   // Provide search suggestions based on input
-  const suggestions = [
-    {
+  const suggestions = [];
+  
+  if (text.trim() === '') {
+    // Empty input - suggest quick save
+    suggestions.push({
+      content: 'quick-save',
+      description: 'Quick save current page'
+    });
+  } else {
+    // User typed something - suggest save with custom title
+    suggestions.push({
       content: `save:${text}`,
       description: `Save current page with title: "${text}"`
-    },
-    {
+    });
+    suggestions.push({
       content: `quick:${text}`,
-      description: `Quick save current page (${text})`
-    }
-  ];
+      description: `Quick save current page (ignore text)`
+    });
+  }
+  
   suggest(suggestions);
 });
 
@@ -46,16 +56,24 @@ chrome.omnibox.onInputEntered.addListener(async (text, disposition) => {
   const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!activeTab?.id) return;
 
-  if (text.startsWith('save:')) {
+  if (text === 'quick-save' || text.trim() === '') {
+    // Quick save for empty input or explicit quick-save
+    await handleQuickSave(activeTab.id);
+  } else if (text.startsWith('save:')) {
     // Save with custom title
     const customTitle = text.substring(5).trim();
-    await handleSaveWithCustomTitle(activeTab.id, customTitle);
+    if (customTitle) {
+      await handleSaveWithCustomTitle(activeTab.id, customTitle);
+    } else {
+      // Empty title after "save:" - do quick save
+      await handleQuickSave(activeTab.id);
+    }
   } else if (text.startsWith('quick:')) {
-    // Quick save
+    // Quick save (ignoring any text after "quick:")
     await handleQuickSave(activeTab.id);
   } else {
-    // Default: open the popup
-    await chrome.action.openPopup();
+    // User typed plain text - save with that as custom title
+    await handleSaveWithCustomTitle(activeTab.id, text.trim());
   }
 });
 
