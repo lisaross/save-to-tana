@@ -144,7 +144,6 @@ chrome.runtime.onMessage.addListener((
       handleSaveWithNotesMessage(request as SaveWithNotesRequest, sendResponse);
       return true; // Async response
 
-
     default:
       console.log(`Unknown message action: ${request.action}`);
       sendResponse({ success: false, error: 'Unknown action' });
@@ -172,29 +171,31 @@ async function saveToTana(data: SaveData): Promise<SaveResponse> {
     
     // Get API key, target node ID, and schema info from storage
     const result = await getStorageConfig();
-    
-    console.log('Retrieved configuration from storage:', result);
+
+    // Redact sensitive information before logging
+    const redactedConfig = { ...result, apiKey: '***' };
+    console.log('Retrieved configuration from storage:', redactedConfig);
     validateConfig(result);
-    
+
     const targetNodeId = result.targetNodeId;
     console.log('Using target node ID:', targetNodeId);
-    
+
     // Build the payload using the schema
     const tanaPayload = buildTanaPayload(
-      data, 
-      targetNodeId, 
-      result.supertagId, 
-      result.tanaFieldIds
+      data,
+      targetNodeId,
+      result.supertagId,
+      result.tanaFieldIds,
     );
     console.log('Formatted Tana payload:', tanaPayload);
-    
+
     // Send data to Tana API
     lastApiCall = Date.now(); // Update timestamp before API call
     const responseData = await sendToTanaApi(tanaPayload, result.apiKey);
-    
+
     return {
       success: true,
-      data: responseData
+      data: responseData,
     };
   } catch (error) {
     console.error('Error saving to Tana:', error);
@@ -208,17 +209,14 @@ async function saveToTana(data: SaveData): Promise<SaveResponse> {
  */
 async function getStorageConfig(): Promise<TanaConfig> {
   return new Promise((resolve, reject) => {
-    chrome.storage.sync.get(
-      ['apiKey', 'targetNodeId', 'supertagId', 'tanaFieldIds'], 
-      (result) => {
-        try {
-          validateConfig(result);
-          resolve(result as TanaConfig);
-        } catch (error) {
-          reject(error);
-        }
+    chrome.storage.sync.get(['apiKey', 'targetNodeId', 'supertagId', 'tanaFieldIds'], (result) => {
+      try {
+        validateConfig(result);
+        resolve(result as TanaConfig);
+      } catch (error) {
+        reject(error);
       }
-    );
+    });
   });
 }
 
@@ -229,19 +227,27 @@ async function getStorageConfig(): Promise<TanaConfig> {
  */
 function validateConfig(config: Partial<TanaConfig>): asserts config is TanaConfig {
   if (!config.apiKey) {
-    throw new Error('API Token not configured. Please go to extension options and set up your configuration.');
+    throw new Error(
+      'API Token not configured. Please go to extension options and set up your configuration.',
+    );
   }
-  
+
   if (!config.supertagId) {
-    throw new Error('Supertag ID not configured. Please extract and save your Tana schema in options.');
+    throw new Error(
+      'Supertag ID not configured. Please extract and save your Tana schema in options.',
+    );
   }
-  
+
   if (!config.targetNodeId) {
-    throw new Error('Target Node ID is required. Please go to options and specify a target node ID.');
+    throw new Error(
+      'Target Node ID is required. Please go to options and specify a target node ID.',
+    );
   }
-  
+
   if (!config.tanaFieldIds) {
-    throw new Error('Field IDs not configured. Please extract and save your Tana schema in options.');
+    throw new Error(
+      'Field IDs not configured. Please extract and save your Tana schema in options.',
+    );
   }
 }
 
@@ -257,19 +263,19 @@ async function sendToTanaApi(payload: TanaPayload, apiKey: string): Promise<any>
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
+      Authorization: `Bearer ${apiKey}`,
     },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
   });
-  
+
   console.log('API response status:', response.status);
-  
+
   if (!response.ok) {
     const errorText = await response.text();
     console.error('API error response:', errorText);
     throw new Error(`API error (${response.status}): ${errorText}`);
   }
-  
+
   const responseData = await response.json();
   console.log('API success response:', responseData);
   return responseData;

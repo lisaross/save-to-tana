@@ -9,10 +9,10 @@
  */
 export function sanitizeText(text: string | undefined): string {
   if (!text) return '';
-  
+
   return text
-    .replace(/\r?\n|\r/g, ' ')  // Replace newlines with spaces
-    .replace(/\s+/g, ' ')       // Replace multiple spaces with a single space
+    .replace(/\r?\n|\r/g, ' ') // Replace newlines with spaces
+    .replace(/\s+/g, ' ') // Replace multiple spaces with a single space
     .trim();
 }
 
@@ -26,17 +26,17 @@ export function splitIntoChunks(content: string, maxSize: number): string[] {
   const paragraphs = content.split(/\n\n+/);
   const chunks: string[] = [];
   let currentChunk = '';
-  
+
   for (const paragraph of paragraphs) {
     if ((currentChunk + paragraph).length > maxSize) {
       if (currentChunk) {
         chunks.push(currentChunk);
         currentChunk = '';
       }
-      
+
       if (paragraph.length > maxSize) {
         const sentences = paragraph.match(/[^.!?]+[.!?]+/g) || [paragraph];
-        
+
         for (const sentence of sentences) {
           if (sentence.length > maxSize) {
             for (let i = 0; i < sentence.length; i += maxSize) {
@@ -58,10 +58,10 @@ export function splitIntoChunks(content: string, maxSize: number): string[] {
       currentChunk += (currentChunk ? '\n\n' : '') + paragraph;
     }
   }
-  
+
   if (currentChunk) {
     chunks.push(currentChunk);
   }
-  
+
   return chunks;
 }

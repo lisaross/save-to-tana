@@ -1,6 +1,7 @@
 /* Modern GitHub Dark Mode Inspired Styles for Chrome Extension */
 
-html, body {
+html,
+body {
   background: #0d1117;
   color: #c9d1d9;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Liberation Sans", Arial, sans-serif;
@@ -19,18 +20,25 @@ body {
   align-items: center;
 }
 
-.container, .form-group, .card {
+.container,
+.form-group,
+.card {
   background: #161b22;
   border: 1px solid #30363d;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
   padding: 24px 24px 16px 24px;
   margin-bottom: 24px;
   width: 100%;
   max-width: 480px;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   color: #f0f6fc;
   font-weight: 700;
   margin-top: 0;
@@ -45,7 +53,9 @@ label {
   display: block;
 }
 
-input, textarea, select {
+input,
+textarea,
+select {
   background: #0d1117;
   color: #c9d1d9;
   border: 1.5px solid #30363d;
@@ -54,16 +64,22 @@ input, textarea, select {
   font-size: 1em;
   margin-bottom: 14px;
   width: 100%;
-  transition: border 0.2s, box-shadow 0.2s;
+  transition:
+    border 0.2s,
+    box-shadow 0.2s;
   box-sizing: border-box;
 }
-input:focus, textarea:focus, select:focus {
+input:focus,
+textarea:focus,
+select:focus {
   outline: none;
   border-color: #8b949e;
   box-shadow: 0 0 0 2px #30363d;
 }
 
-button, input[type="button"], input[type="submit"] {
+button,
+input[type="button"],
+input[type="submit"] {
   background: #21262d;
   color: #f0f6fc;
   border: 1.5px solid #30363d;
@@ -72,15 +88,22 @@ button, input[type="button"], input[type="submit"] {
   font-size: 1em;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s, border 0.2s, box-shadow 0.2s;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+  transition:
+    background 0.2s,
+    border 0.2s,
+    box-shadow 0.2s;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
   margin-top: 8px;
 }
-button:hover, input[type="button"]:hover, input[type="submit"]:hover {
+button:hover,
+input[type="button"]:hover,
+input[type="submit"]:hover {
   background: #30363d;
   border-color: #8b949e;
 }
-button:disabled, input[type="button"]:disabled, input[type="submit"]:disabled {
+button:disabled,
+input[type="button"]:disabled,
+input[type="submit"]:disabled {
   background: #23272e;
   color: #666;
   border-color: #23272e;
@@ -94,7 +117,8 @@ button:disabled, input[type="button"]:disabled, input[type="submit"]:disabled {
   margin-bottom: 12px;
 }
 
-.status, .not-configured {
+.status,
+.not-configured {
   padding: 12px 16px;
   border-radius: 8px;
   font-size: 15px;
@@ -103,7 +127,7 @@ button:disabled, input[type="button"]:disabled, input[type="submit"]:disabled {
   background: #21262d;
   border: 1px solid #30363d;
   color: #c9d1d9;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 .success {
   background: #1a7f37;
@@ -130,7 +154,8 @@ button:disabled, input[type="button"]:disabled, input[type="submit"]:disabled {
 }
 
 /* --- PRE BLOCKS (CODE/EXTRACTED FIELDS/EXAMPLE JSON) --- */
-pre, code {
+pre,
+code {
   background: #22272e !important;
   color: #f0f6fc !important;
   border-radius: 8px;
@@ -139,8 +164,8 @@ pre, code {
   overflow-x: auto;
   margin-bottom: 16px;
   border: 1px solid #30363d;
-  font-family: 'Fira Mono', 'Consolas', 'Menlo', 'Monaco', 'monospace';
-  box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+  font-family: "Fira Mono", "Consolas", "Menlo", "Monaco", "monospace";
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
 .help-text {
@@ -172,16 +197,23 @@ pre, code {
   border-radius: 4px;
 }
 
-input[type="checkbox"], input[type="radio"] {
+input[type="checkbox"],
+input[type="radio"] {
   accent-color: #8b949e;
   width: 18px;
   height: 18px;
 }
 
 /* Utility classes */
-.mt-1 { margin-top: 12px; }
-.mb-1 { margin-bottom: 12px; }
-.p-1 { padding: 12px; }
+.mt-1 {
+  margin-top: 12px;
+}
+.mb-1 {
+  margin-bottom: 12px;
+}
+.p-1 {
+  padding: 12px;
+}
 
 /* Remove outline for mouse users but keep for keyboard */
 :focus:not(:focus-visible) {
@@ -201,7 +233,7 @@ input[type="checkbox"], input[type="radio"] {
   background: #161b22;
   border: 1.5px solid #30363d;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
   padding: 32px 28px 28px 28px;
   display: flex;
   flex-direction: column;
@@ -275,7 +307,7 @@ input[type="checkbox"], input[type="radio"] {
   border: 1px solid #30363d;
   border-radius: 8px;
   color: #c9d1d9;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
 #save-button {
@@ -299,7 +331,8 @@ input[type="checkbox"], input[type="radio"] {
   gap: 6px;
   transition: color 0.2s;
 }
-.toggle-btn:hover, .toggle-btn:focus {
+.toggle-btn:hover,
+.toggle-btn:focus {
   color: #f0f6fc;
   outline: none;
 }
@@ -308,7 +341,9 @@ input[type="checkbox"], input[type="radio"] {
   transition: transform 0.2s;
 }
 .toggle-icon svg {
-  transition: transform 0.2s, stroke 0.2s;
+  transition:
+    transform 0.2s,
+    stroke 0.2s;
   vertical-align: middle;
 }
 .toggle-btn[aria-expanded="true"] .toggle-icon svg {
@@ -338,11 +373,13 @@ input[type="checkbox"], input[type="radio"] {
   border-radius: 8px;
   padding: 14px 24px;
   font-size: 1em;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
   z-index: 100;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s, top 0.3s;
+  transition:
+    opacity 0.3s,
+    top 0.3s;
 }
 .toast.show {
   opacity: 1;
@@ -399,8 +436,11 @@ input[type="checkbox"], input[type="radio"] {
   font-size: 1em;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s, border 0.2s, box-shadow 0.2s;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+  transition:
+    background 0.2s,
+    border 0.2s,
+    box-shadow 0.2s;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
   margin-left: 16px;
 }
 .bento-save-btn:disabled {
@@ -441,14 +481,15 @@ input[type="checkbox"], input[type="radio"] {
 .bento-schema {
   min-width: 320px;
 }
-.bento-api, .bento-fields {
+.bento-api,
+.bento-fields {
   min-width: 220px;
 }
 .bento-card {
   background: #161b22;
   border: 1.5px solid #30363d;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
   padding: 32px 28px 28px 28px;
   display: flex;
   flex-direction: column;
@@ -474,7 +515,10 @@ input[type="checkbox"], input[type="radio"] {
     gap: 24px;
     padding: 0 12px 32px 12px;
   }
-  .bento-instructions, .bento-schema, .bento-api, .bento-fields {
+  .bento-instructions,
+  .bento-schema,
+  .bento-api,
+  .bento-fields {
     max-width: 100%;
     min-width: 0;
   }
@@ -491,11 +535,13 @@ input[type="checkbox"], input[type="radio"] {
   border-radius: 8px;
   padding: 14px 24px;
   font-size: 1em;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
   z-index: 200;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s, top 0.3s;
+  transition:
+    opacity 0.3s,
+    top 0.3s;
 }
 .toast.show {
   opacity: 1;
@@ -514,7 +560,12 @@ input[type="checkbox"], input[type="radio"] {
 }
 
 /* Remove old grouped card/side-col styles */
-.grouped-card, .side-col, .main-col, .save-options-row { display: none !important; }
+.grouped-card,
+.side-col,
+.main-col,
+.save-options-row {
+  display: none !important;
+}
 
 /* --- END BENTO LAYOUT --- */
 
@@ -549,7 +600,8 @@ input[type="checkbox"], input[type="radio"] {
   font-weight: 500;
   color: #c9d1d9;
 }
-.bento-card input[type="text"], .bento-card textarea {
+.bento-card input[type="text"],
+.bento-card textarea {
   margin-bottom: 10px;
 }
 

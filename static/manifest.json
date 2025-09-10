@@ -10,6 +10,9 @@
     "scripting",
     "notifications"
   ],
+  "host_permissions": [
+    "https://europe-west1-tagr-prod.cloudfunctions.net/*"
+  ],
   "commands": {
     "quick-save": {
       "suggested_key": {
