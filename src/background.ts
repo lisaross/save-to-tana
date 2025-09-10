@@ -556,7 +556,7 @@ function showNotification(message: string, type: 'success' | 'error' = 'success'
   
   chrome.notifications.create(notificationId, {
     type: 'basic',
-    iconUrl: 'images/icon48.png',
+    // iconUrl: 'images/icon48.png', // Removed to fix download error
     title: 'Save to Tana',
     message: message
   });
