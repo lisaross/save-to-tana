@@ -4,7 +4,7 @@ import {
   TanaPayload, 
   TanaNode,
   TanaNodeChildContent
-} from '../types';
+} from './types/index';
 import { sanitizeText, splitIntoChunks } from './utils/textUtils';
 
 /**
@@ -66,6 +66,13 @@ export function buildTanaPayload(
       type: 'field',
       attributeId: fieldIds.Description,
       children: [{ name: sanitizeText(data.description) }]
+    });
+  }
+  
+  // Add user notes as a direct child node (appears in body)
+  if (data.notes && data.notes.trim()) {
+    mainNode.children.push({
+      name: sanitizeText(data.notes)
     });
   }
   

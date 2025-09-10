@@ -6,8 +6,32 @@
   "permissions": [
     "activeTab",
     "storage",
-    "contextMenus"
+    "contextMenus",
+    "scripting",
+    "notifications"
   ],
+  "host_permissions": [
+    "https://europe-west1-tagr-prod.cloudfunctions.net/*"
+  ],
+  "commands": {
+    "quick-save": {
+      "suggested_key": {
+        "default": "Alt+Shift+T",
+        "mac": "Command+Shift+S"
+      },
+      "description": "Quick save current page to Tana"
+    },
+    "save-with-notes": {
+      "suggested_key": {
+        "default": "Alt+Shift+N",
+        "mac": "Command+Shift+N"
+      },
+      "description": "Save current page to Tana with notes dialog"
+    }
+  },
+  "omnibox": {
+    "keyword": "tana"
+  },
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
