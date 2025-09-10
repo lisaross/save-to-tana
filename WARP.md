@@ -94,6 +94,7 @@ Located in `src/types/index.ts`:
   - 2-space indentation, 100 character line width
   - Console logging allowed (extension debugging)
   - Explicit `any` types prohibited
+  - **Never log API keys or secrets** - When logging configs, redact sensitive fields (e.g., `apiKey: '***'`)
 
 ### Build System
 - **Vite** for modern bundling with TypeScript support
