@@ -16,11 +16,26 @@ A Chrome extension that saves web page content to Tana with structured fields an
 
 ## Features
 
+### Core Functionality
 - Save web page content to Tana with proper structure
 - Automatically extract metadata (title, URL, author, description)
 - Apply supertags and structured fields to saved content
 - Extract configuration directly from your Tana nodes
-- Right-click context menu for easy configuration
+
+### Multiple Ways to Save Content
+- **Extension Popup**: Click the extension icon to save content
+- **Keyboard Shortcuts**: 
+  - `Ctrl+Shift+S` (Windows/Linux) or `Cmd+Shift+S` (Mac) for quick save
+  - `Ctrl+Shift+D` (Windows/Linux) or `Cmd+Shift+D` (Mac) for save with notes
+- **Omnibox Integration**: Type `tana` in the address bar to save with optional notes
+- **Context Menus**: Right-click on pages, links, or selected text to save
+- **Quick Capture Overlay**: Modal dialog for adding notes before saving
+
+### Enhanced User Experience
+- Dark mode overlay interface that works on any website
+- Toast notifications for save confirmation and errors
+- Support for saving selected text from any webpage
+- Cross-platform keyboard shortcuts
 
 ## Installation Instructions
 
@@ -50,11 +65,32 @@ A Chrome extension that saves web page content to Tana with structured fields an
 
 ## How to Use
 
+### Method 1: Extension Popup (Original)
 1. Navigate to any web page you want to save to Tana
 2. Click the Save to Tana extension icon in your Chrome toolbar
 3. Select which content you want to include (page title, content)
 4. Click "Save to Tana"
 5. The content will be saved to Tana with the proper structure, fields, and supertag
+
+### Method 2: Keyboard Shortcuts (New!)
+- **Quick Save**: Press `Ctrl+Shift+S` (Windows/Linux) or `Cmd+Shift+S` (Mac) to instantly save the current page
+- **Save with Notes**: Press `Ctrl+Shift+D` (Windows/Linux) or `Cmd+Shift+D` (Mac) to open the overlay and add notes before saving
+
+### Method 3: Omnibox Integration (New!)
+1. Click in the browser address bar
+2. Type `tana` followed by a space
+3. Enter optional text for custom notes or title
+4. Press Enter to save the current page with your notes
+
+### Method 4: Context Menus (New!)
+- **Right-click on any webpage**: Select "Save page to Tana" or "Save page to Tana with notes"
+- **Right-click on selected text**: Select "Save selection to Tana" to save just the selected content
+
+### Method 5: Quick Capture Overlay (New!)
+When using "save with notes" options, a beautiful overlay will appear allowing you to:
+- Preview what's being saved (title and URL)
+- Add custom notes to accompany the saved content
+- Save or cancel with keyboard shortcuts (`Ctrl/Cmd+Enter` to save, `Escape` to cancel)
 
 ## About the Tana Input API Integration
 
